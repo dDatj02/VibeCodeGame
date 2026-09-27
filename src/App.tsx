@@ -50,7 +50,7 @@ export const App: React.FC = () => {
   }, []);
 
   return (
-    <div className="flex flex-col h-[100dvh] max-h-[100dvh] w-full overflow-hidden bg-[#FAF4ED] font-['Nunito',sans-serif] text-[#3D2619] select-none antialiased fixed inset-0">
+    <div className="fixed inset-0 w-full h-full flex flex-col overflow-hidden bg-[#FAF4ED] font-['Nunito',sans-serif] text-[#3D2619] select-none antialiased">
       {/* 1. Header (Top Bar Contract: wordmark, vital meters, controls) */}
       <Header />
 

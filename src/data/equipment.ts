@@ -18,17 +18,17 @@ export const INITIAL_EQUIPMENT: Equipment[] = [
   },
   {
     id: 'cooler',
-    name: 'Thùng Đá & Tủ Mát',
+    name: 'Tủ Lạnh & Tủ Đông Cấp Đông',
     category: 'cooling',
-    icon: '🧊',
+    icon: '❄️',
     level: 1,
     maxLevel: 4,
     currentCost: 450000,
     prepSpeedBonus: 0,
     qualityBonus: 0.15,
-    freshnessRetentionBonus: 0.25, // slows down spoilage
+    freshnessRetentionBonus: 0.20, // up to 0.70 at level 4!
     cleanlinessBonus: 0.1,
-    description: 'Giữ đá lâu tan và bảo quản trái cây luôn tươi mát đạt chuẩn 5 sao.',
+    description: 'Nâng cấp Tủ Lạnh Inverter giúp bảo quản trái cây tươi lâu hơn tới 70%, chống úng hỏng và giữ đá không bị tan!',
     electricityCostPerDay: 8000,
   },
   {

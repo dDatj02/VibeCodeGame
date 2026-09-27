@@ -116,7 +116,10 @@ export const useShopStore = create<ShopState>((set, get) => ({
 
   getCoolerFreshnessBonus: () => {
     const cooler = get().equipment.find((e) => e.id === 'cooler');
-    return cooler ? (cooler.level - 1) * 0.25 : 0;
+    if (!cooler) return 0.20;
+    // Level 1: 0.20 (20%), Level 2: 0.40 (40%), Level 3: 0.55 (55%), Level 4: 0.70 (70% max retention bonus!)
+    const bonuses = [0, 0.20, 0.40, 0.55, 0.70];
+    return bonuses[cooler.level] || 0.20;
   },
 
   getTotalDailyRent: () => {

@@ -32,8 +32,8 @@ export const PWAInstallBanner: React.FC = () => {
 
   return (
     <>
-      {/* Top/Bottom Floating Banner */}
-      <div className="fixed top-2 left-1/2 -translate-x-1/2 z-50 w-[95%] max-w-md bg-gradient-to-r from-amber-600 via-orange-500 to-amber-600 text-white p-2.5 rounded-2xl shadow-xl border border-amber-300/40 backdrop-blur-md animate-fade-in flex items-center justify-between gap-2.5">
+      {/* Top Floating Banner */}
+      <div className="fixed top-[calc(0.5rem+env(safe-area-inset-top,0px))] left-1/2 -translate-x-1/2 z-50 w-[95%] max-w-md bg-gradient-to-r from-amber-600 via-orange-500 to-amber-600 text-white p-2.5 rounded-2xl shadow-xl border border-amber-300/40 backdrop-blur-md animate-fade-in flex items-center justify-between gap-2.5">
         <div className="flex items-center gap-2.5 min-w-0">
           <img
             src="/pwa-192x192.png"

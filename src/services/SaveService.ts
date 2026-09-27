@@ -50,6 +50,8 @@ export interface GameSaveDataV1 {
     weather: string;
     shopName?: string;
     shopAvatar?: string;
+    managerName?: string;
+    managerAvatar?: string;
   };
   economy: {
     cash: number;
@@ -102,6 +104,8 @@ export class SaveService {
           weather: g.weather,
           shopName: g.shopName,
           shopAvatar: g.shopAvatar,
+          managerName: g.managerName,
+          managerAvatar: g.managerAvatar,
         },
         economy: {
           cash: e.cash,
@@ -158,6 +162,8 @@ export class SaveService {
           weather: data.game.weather as any,
           shopName: data.game.shopName || 'Sinh Tố Nhà Tui',
           shopAvatar: data.game.shopAvatar || '🍹',
+          managerName: (data.game as any).managerName || 'Bé Bơ',
+          managerAvatar: (data.game as any).managerAvatar || '🥑',
           phase: 'prep',
         });
       }

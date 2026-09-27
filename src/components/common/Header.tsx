@@ -85,23 +85,23 @@ export const Header: React.FC = () => {
             </div>
           </button>
 
-          {/* ALL Game Tool Buttons (Never cut off) */}
-          <div className="flex items-center gap-1 shrink-0">
+          {/* ALL Game Tool Buttons (Compact & Responsive) */}
+          <div className="flex items-center gap-0.5 sm:gap-1 shrink-0 flex-wrap justify-end">
             {/* Toggle Kitchen mode button */}
             <button
               onClick={() => {
                 audioService.playClick();
                 setInKitchenMode(!inKitchenMode);
               }}
-              className={`px-2 py-0.5 text-[11px] font-bold rounded-lg transition-all flex items-center gap-1 shadow-2xs cursor-pointer ${
+              className={`px-1.5 sm:px-2 py-0.5 text-[10px] sm:text-[11px] font-bold rounded-lg transition-all flex items-center gap-1 shadow-2xs cursor-pointer ${
                 inKitchenMode
                   ? 'bg-amber-100 text-amber-900 border border-amber-300'
                   : 'bg-[#F26440] hover:bg-[#E05338] text-white'
               }`}
               title={inKitchenMode ? 'Về sảnh tiệm' : 'Vào quầy pha chế'}
             >
-              <UtensilsCrossed size={12} />
-              <span className="text-[10px]">{inKitchenMode ? 'Về sảnh' : 'Vào quầy'}</span>
+              <UtensilsCrossed size={11} />
+              <span className="text-[9.5px] sm:text-[10px]">{inKitchenMode ? 'Sảnh' : 'Quầy'}</span>
             </button>
 
             {/* Speed & Pause Pill */}
@@ -116,17 +116,17 @@ export const Header: React.FC = () => {
                 }`}
                 title={isPaused ? 'Tiếp tục' : 'Tạm dừng'}
               >
-                {isPaused ? <Play size={11} /> : <Pause size={11} />}
+                {isPaused ? <Play size={10} /> : <Pause size={10} />}
               </button>
               <button
                 onClick={() => {
                   audioService.playClick();
                   setGameSpeed(gameSpeed === 1 ? 2 : gameSpeed === 2 ? 3 : 1);
                 }}
-                className="px-1 text-[10px] font-black text-amber-700 hover:text-amber-800 transition-colors flex items-center cursor-pointer"
+                className="px-0.5 sm:px-1 text-[9.5px] sm:text-[10px] font-black text-amber-700 hover:text-amber-800 transition-colors flex items-center cursor-pointer"
                 title="Tốc độ game"
               >
-                <FastForward size={10} />
+                <FastForward size={9} />
                 <span>{gameSpeed}x</span>
               </button>
             </div>
@@ -134,32 +134,32 @@ export const Header: React.FC = () => {
             {/* Sound Toggle (Bật/Tắt âm thanh) */}
             <button
               onClick={toggleSound}
-              className={`p-1.5 rounded-lg border shadow-2xs transition-colors cursor-pointer ${
+              className={`p-1 sm:p-1.5 rounded-lg border shadow-2xs transition-colors cursor-pointer ${
                 soundOn
                   ? 'bg-white hover:bg-amber-50 text-[#8C624D] hover:text-[#3D2619] border-[#EEDCC8]'
                   : 'bg-rose-50 text-rose-600 border-rose-200'
               }`}
               title={soundOn ? 'Tắt âm thanh' : 'Bật âm thanh'}
             >
-              {soundOn ? <Volume2 size={13} /> : <VolumeX size={13} />}
+              {soundOn ? <Volume2 size={12} /> : <VolumeX size={12} />}
             </button>
 
             {/* Save (Lưu game) */}
             <button
               onClick={handleSave}
-              className="p-1.5 text-[#8C624D] hover:text-emerald-700 bg-white hover:bg-emerald-50 rounded-lg border border-[#EEDCC8] shadow-2xs transition-colors cursor-pointer"
+              className="p-1 sm:p-1.5 text-[#8C624D] hover:text-emerald-700 bg-white hover:bg-emerald-50 rounded-lg border border-[#EEDCC8] shadow-2xs transition-colors cursor-pointer"
               title="Lưu game"
             >
-              <Save size={13} />
+              <Save size={12} />
             </button>
 
             {/* Reset (Chơi lại từ đầu) */}
             <button
               onClick={handleReset}
-              className="p-1.5 text-[#8C624D] hover:text-rose-600 bg-white hover:bg-rose-50 rounded-lg border border-[#EEDCC8] shadow-2xs transition-colors cursor-pointer"
+              className="p-1 sm:p-1.5 text-[#8C624D] hover:text-rose-600 bg-white hover:bg-rose-50 rounded-lg border border-[#EEDCC8] shadow-2xs transition-colors cursor-pointer"
               title="Chơi lại từ đầu"
             >
-              <RotateCcw size={12} />
+              <RotateCcw size={11} />
             </button>
           </div>
         </div>

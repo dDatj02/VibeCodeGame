@@ -38,6 +38,8 @@ const INITIAL_QUESTS: DailyQuest[] = [
 interface GameState {
   shopName: string;
   shopAvatar: string;
+  managerName: string;
+  managerAvatar: string;
   xp: number;
   maxXp: number;
   inKitchenMode: boolean;
@@ -58,6 +60,7 @@ interface GameState {
   setShopName: (name: string) => void;
   setShopAvatar: (avatar: string) => void;
   setShopProfile: (name: string, avatar: string) => void;
+  setManagerProfile: (name: string, avatar: string) => void;
   addXp: (amount: number) => void;
   setInKitchenMode: (inKitchen: boolean) => void;
   progressQuest: (questIndex: number, delta?: number) => void;
@@ -86,6 +89,8 @@ const WEATHERS: WeatherType[] = ['sunny', 'sunny', 'heatwave', 'sunny', 'rain', 
 export const useGameStore = create<GameState>((set, get) => ({
   shopName: 'Sinh Tố Nhà Tui',
   shopAvatar: '🍹',
+  managerName: 'Bé Bơ',
+  managerAvatar: '🥑',
   xp: 120,
   maxXp: 500,
   inKitchenMode: false,
@@ -105,6 +110,7 @@ export const useGameStore = create<GameState>((set, get) => ({
   setShopName: (name) => set({ shopName: name }),
   setShopAvatar: (avatar) => set({ shopAvatar: avatar }),
   setShopProfile: (name, avatar) => set({ shopName: name, shopAvatar: avatar }),
+  setManagerProfile: (name, avatar) => set({ managerName: name, managerAvatar: avatar }),
 
   addXp: (amount) => {
     set((state) => {

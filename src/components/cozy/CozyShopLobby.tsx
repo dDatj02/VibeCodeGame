@@ -34,6 +34,9 @@ export const CozyShopLobby: React.FC<CozyShopLobbyProps> = ({ onOpenKitchen }) =
     weather, 
     shopName, 
     setShopName, 
+    managerName,
+    managerAvatar,
+    setManagerProfile,
     xp, 
     maxXp, 
     quests, 
@@ -42,6 +45,9 @@ export const CozyShopLobby: React.FC<CozyShopLobbyProps> = ({ onOpenKitchen }) =
     openShopForDay,
     showNotification 
   } = useGameStore();
+
+  const displayManagerName = managerName || 'Bé Bơ';
+  const displayManagerAvatar = managerAvatar || '🥑';
 
   const cash = useEconomyStore((state) => state.cash);
   const currentShopLevel = useShopStore((state) => state.currentShopLevel);
@@ -54,7 +60,34 @@ export const CozyShopLobby: React.FC<CozyShopLobbyProps> = ({ onOpenKitchen }) =
   const [isEditingName, setIsEditingName] = useState(false);
   const [tempName, setTempName] = useState(shopName);
   const [showHowToPlay, setShowHowToPlay] = useState(false);
+  const [showManagerModal, setShowManagerModal] = useState(false);
+  const [tempManagerName, setTempManagerName] = useState(managerName);
+  const [tempManagerAvatar, setTempManagerAvatar] = useState(managerAvatar);
   const [lobbySubTab, setLobbySubTab] = useState<'quests' | 'restock' | 'shortcuts'>('quests');
+
+  const MANAGER_AVATAR_OPTIONS = [
+    { icon: '🥑', label: 'Bé Bơ' },
+    { icon: '🥭', label: 'Bé Xoài' },
+    { icon: '🍓', label: 'Bé Dâu' },
+    { icon: '🍉', label: 'Bé Dưa' },
+    { icon: '🍌', label: 'Bé Chuối' },
+    { icon: '🥥', label: 'Bé Dừa' },
+    { icon: '🐱', label: 'Mèo Bán Nước' },
+    { icon: '🐶', label: 'Cún Quản Lý' },
+    { icon: '🦊', label: 'Cáo Phục Vụ' },
+    { icon: '🐻', label: 'Gấu Pha Chế' },
+    { icon: '🐰', label: 'Thỏ Mọng Nước' },
+    { icon: '🦁', label: 'Sư Tử Sếp' },
+  ];
+
+  const handleSaveManagerProfile = () => {
+    if (tempManagerName.trim()) {
+      setManagerProfile(tempManagerName.trim(), tempManagerAvatar);
+      setShowManagerModal(false);
+      audioService.playClick();
+      showNotification(`Đã cập nhật quản lý ${tempManagerAvatar} ${tempManagerName.trim()}!`, 'success');
+    }
+  };
 
   const currentLevelConfig = SHOP_LEVELS.find((cfg) => cfg.level === currentShopLevel) || SHOP_LEVELS[0];
 
@@ -287,33 +320,66 @@ export const CozyShopLobby: React.FC<CozyShopLobbyProps> = ({ onOpenKitchen }) =
               </span>
             </div>
 
-            {/* Mascot "Bé Bơ" & Dialogue Bubble */}
-            <div className="flex items-center gap-3 my-1 bg-amber-50/90 border border-amber-200/80 p-2.5 rounded-2xl shadow-2xs">
-              <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center text-3xl shadow-md shrink-0 border border-white">
-                🥑
-              </div>
-              <div className="min-w-0 flex-1">
-                <div className="flex items-center justify-between mb-0.5">
-                  <span className="text-xs font-black text-[#3D2619] flex items-center gap-1">
-                    <span>Bé Bơ</span>
-                    <span className="text-[9px] bg-emerald-100 text-emerald-800 font-extrabold px-1.5 py-0.2 rounded-full">
-                      Quản lý tiệm
+            {/* Manager Mascot Card & Dialogue Bubble */}
+            <div className="flex flex-col gap-1.5 my-1 bg-amber-50/90 border border-amber-200/80 p-2.5 rounded-2xl shadow-2xs">
+              {/* Top Header Row: Manager Info on left, Clean Button on right */}
+              <div className="flex items-center justify-between gap-2 w-full">
+                <div className="flex items-center gap-2 min-w-0">
+                  <button
+                    onClick={() => {
+                      setTempManagerName(displayManagerName);
+                      setTempManagerAvatar(displayManagerAvatar);
+                      setShowManagerModal(true);
+                      audioService.playClick();
+                    }}
+                    className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-400 via-amber-400 to-amber-500 flex items-center justify-center text-2xl shadow-sm shrink-0 border border-white hover:scale-105 transition-transform cursor-pointer relative"
+                    title="Chỉnh sửa quản lý & icon"
+                  >
+                    <span>{displayManagerAvatar}</span>
+                    <span className="absolute -bottom-1 -right-1 bg-amber-600 text-white p-0.5 rounded-full text-[8px] shadow-xs">
+                      <Edit3 size={8} />
                     </span>
-                  </span>
-                  {cleanliness < 100 && (
+                  </button>
+
+                  <div className="min-w-0 flex flex-col justify-center">
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-xs sm:text-sm font-black text-[#3D2619] truncate">
+                        {displayManagerName}
+                      </span>
+                      <span className="text-[9px] bg-emerald-100 text-emerald-800 font-extrabold px-1.5 py-0.2 rounded-full shrink-0">
+                        Quản lý
+                      </span>
+                    </div>
+
                     <button
-                      onClick={handleCleanUp}
-                      className="text-[10px] font-black bg-amber-500 hover:bg-amber-600 text-white px-2 py-0.5 rounded-lg shadow-2xs transition-all flex items-center gap-1 active:scale-95 cursor-pointer"
+                      onClick={() => {
+                        setTempManagerName(displayManagerName);
+                        setTempManagerAvatar(displayManagerAvatar);
+                        setShowManagerModal(true);
+                        audioService.playClick();
+                      }}
+                      className="text-[10px] text-amber-800 hover:text-[#E05338] font-bold underline cursor-pointer text-left w-fit"
                     >
-                      <span>🧹</span>
-                      <span>Lau dọn ({cleanliness}%)</span>
+                      Đổi avatar & tên
                     </button>
-                  )}
+                  </div>
                 </div>
-                <p className="text-[11px] font-bold text-amber-900 leading-snug">
-                  "{getMascotSpeech()}"
-                </p>
+
+                {cleanliness < 100 && (
+                  <button
+                    onClick={handleCleanUp}
+                    className="text-[10px] font-black bg-amber-500 hover:bg-amber-600 text-white px-2 py-1 rounded-xl shadow-xs transition-all flex items-center gap-1 active:scale-95 cursor-pointer shrink-0 border border-amber-400/40"
+                  >
+                    <span>🧹</span>
+                    <span>Lau dọn ({cleanliness}%)</span>
+                  </button>
+                )}
               </div>
+
+              {/* Bottom Quote Row */}
+              <p className="text-[11px] font-bold text-amber-900 leading-snug pl-1 pt-0.5 border-t border-amber-200/50">
+                "{getMascotSpeech()}"
+              </p>
             </div>
 
             {/* Interactive Fruit Wooden Crates (Quick View Inventory) */}
@@ -605,6 +671,91 @@ export const CozyShopLobby: React.FC<CozyShopLobbyProps> = ({ onOpenKitchen }) =
             >
               Đã hiểu, vào tiệm thôi!
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* Manager Profile Customization Modal */}
+      {showManagerModal && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-2xs flex items-center justify-center p-3 animate-fade-in">
+          <div className="bg-[#FFFDF9] border-2 border-[#E05338] rounded-3xl p-4 max-w-sm w-full shadow-2xl text-[#3D2619] relative">
+            <div className="flex items-center justify-between mb-3 border-b border-[#F0D5C3] pb-2">
+              <div className="flex items-center gap-2">
+                <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-emerald-400 to-amber-400 flex items-center justify-center text-2xl shadow-inner border border-white">
+                  {tempManagerAvatar}
+                </div>
+                <div>
+                  <h3 className="text-sm font-black text-[#3D2619] font-['Comfortaa']">
+                    Đổi Quản Lý & Avatar Tiệm
+                  </h3>
+                  <p className="text-[10.5px] text-[#8C624D] font-bold">
+                    Tùy chỉnh tên & linh vật của tiệm sinh tố
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Input Name */}
+            <div className="mb-3">
+              <label className="block text-xs font-black text-[#78513E] mb-1">
+                Tên Quản Lý Tiệm:
+              </label>
+              <input
+                type="text"
+                value={tempManagerName}
+                onChange={(e) => setTempManagerName(e.target.value)}
+                className="w-full px-3 py-2 bg-white border border-[#F0D5C3] rounded-xl text-xs font-black text-[#3D2619] outline-none focus:border-[#E05338] shadow-2xs"
+                placeholder="Nhập tên quản lý..."
+                maxLength={18}
+              />
+            </div>
+
+            {/* Avatar Grid Selection */}
+            <div className="mb-4">
+              <label className="block text-xs font-black text-[#78513E] mb-1.5">
+                Chọn Avatar / Linh Vật Bán Nước:
+              </label>
+              <div className="grid grid-cols-4 gap-1.5 max-h-48 overflow-y-auto no-scrollbar p-1 bg-[#FAF0E6] rounded-2xl border border-[#EEDCC8]">
+                {MANAGER_AVATAR_OPTIONS.map((opt) => {
+                  const isSelected = tempManagerAvatar === opt.icon;
+                  return (
+                    <button
+                      key={opt.icon}
+                      onClick={() => {
+                        setTempManagerAvatar(opt.icon);
+                        audioService.playClick();
+                      }}
+                      className={`p-2 rounded-xl border flex flex-col items-center justify-center gap-0.5 transition-all cursor-pointer ${
+                        isSelected
+                          ? 'bg-amber-400 border-[#E05338] text-white shadow-md scale-105 ring-2 ring-amber-300'
+                          : 'bg-white border-[#F0D5C3] hover:bg-amber-50 text-[#3D2619]'
+                      }`}
+                    >
+                      <span className="text-2xl">{opt.icon}</span>
+                      <span className="text-[9px] font-black truncate w-full text-center">
+                        {opt.label}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Actions */}
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setShowManagerModal(false)}
+                className="flex-1 py-2 bg-stone-100 hover:bg-stone-200 text-stone-700 font-black text-xs rounded-xl transition-colors cursor-pointer"
+              >
+                Hủy
+              </button>
+              <button
+                onClick={handleSaveManagerProfile}
+                className="flex-1 py-2 bg-[#E05338] hover:bg-[#D2442A] text-white font-black text-xs rounded-xl shadow-md transition-all active:scale-95 cursor-pointer"
+              >
+                Lưu Thay Đổi
+              </button>
+            </div>
           </div>
         </div>
       )}

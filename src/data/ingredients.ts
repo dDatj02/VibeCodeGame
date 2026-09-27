@@ -11,7 +11,7 @@ export const INITIAL_INGREDIENTS: Ingredient[] = [
     unit: 'phần',
     currentStock: 15,
     freshness: 100,
-    shelfLifeDays: 3,
+    shelfLifeDays: 5,
     color: '#F59E0B',
   },
   {
@@ -24,7 +24,7 @@ export const INITIAL_INGREDIENTS: Ingredient[] = [
     unit: 'phần',
     currentStock: 15,
     freshness: 100,
-    shelfLifeDays: 4,
+    shelfLifeDays: 6,
     color: '#EAB308',
   },
   {
@@ -37,7 +37,7 @@ export const INITIAL_INGREDIENTS: Ingredient[] = [
     unit: 'phần',
     currentStock: 12,
     freshness: 100,
-    shelfLifeDays: 2,
+    shelfLifeDays: 4,
     color: '#EF4444',
   },
   {
@@ -50,7 +50,7 @@ export const INITIAL_INGREDIENTS: Ingredient[] = [
     unit: 'phần',
     currentStock: 10,
     freshness: 100,
-    shelfLifeDays: 3,
+    shelfLifeDays: 5,
     color: '#10B981',
   },
   {
@@ -63,7 +63,7 @@ export const INITIAL_INGREDIENTS: Ingredient[] = [
     unit: 'phần',
     currentStock: 15,
     freshness: 100,
-    shelfLifeDays: 4,
+    shelfLifeDays: 6,
     color: '#EF4444',
   },
   {
@@ -76,7 +76,7 @@ export const INITIAL_INGREDIENTS: Ingredient[] = [
     unit: 'phần',
     currentStock: 30,
     freshness: 100,
-    shelfLifeDays: 7,
+    shelfLifeDays: 8,
     color: '#F8FAFC',
   },
   {
@@ -102,7 +102,7 @@ export const INITIAL_INGREDIENTS: Ingredient[] = [
     unit: 'phần',
     currentStock: 60,
     freshness: 100,
-    shelfLifeDays: 1,
+    shelfLifeDays: 2,
     color: '#93C5FD',
   },
   {
@@ -129,7 +129,7 @@ export const INITIAL_INGREDIENTS: Ingredient[] = [
     unit: 'phần',
     currentStock: 0,
     freshness: 100,
-    shelfLifeDays: 4,
+    shelfLifeDays: 6,
     color: '#E2E8F0',
   },
   {
