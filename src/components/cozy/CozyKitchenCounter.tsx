@@ -9,6 +9,7 @@ import { formatVND } from '../../utils/format';
 import { audioService } from '../../services/AudioService';
 import { CUSTOMER_ARCHETYPES } from '../../data/customers';
 import { CozyCustomerCharacter } from './CozyCustomerCharacter';
+import { IngredientRequirement } from '../../types';
 import { 
   ArrowLeft, 
   Trash2, 
@@ -155,16 +156,48 @@ export const CozyKitchenCounter: React.FC<CozyKitchenCounterProps> = ({ onBackTo
     }
   };
 
-  // Clear / trash current cup
+  // Clear / trash current cup with ingredient wastage cost calculation
   const handleTrashCup = () => {
     if (!hasCup) return;
+
+    const invStore = useInventoryStore.getState();
+    const custStore = useCustomerStore.getState();
+
+    // Map ingredients in cup to inventory requirements
+    const trashedRequirements: IngredientRequirement[] = [
+      { ingredientId: 'cup', amount: 1, unit: 'ly' },
+    ];
+
+    const counts: Record<string, number> = {};
+    addedIngredients.forEach((ingId) => {
+      const stockId = ingId.startsWith('ice') ? 'ice' : ingId.startsWith('sugar') ? 'sugar' : ingId;
+      counts[stockId] = (counts[stockId] || 0) + 1;
+    });
+
+    Object.entries(counts).forEach(([ingId, amount]) => {
+      trashedRequirements.push({ ingredientId: ingId, amount, unit: 'phần' });
+    });
+
+    // Deduct stock from inventory
+    invStore.consumeIngredients(trashedRequirements);
+
+    // Calculate wasted ingredient cost
+    const wastedCost = invStore.calculateRecipeIngredientCost(trashedRequirements);
+
+    // Record wastage cost in daily financial metrics
+    if (wastedCost > 0) {
+      custStore.recordSale(0, wastedCost);
+    }
+
     setHasCup(false);
     setAddedIngredients([]);
     setIsBlending(false);
     setIsBlended(false);
     setBlendProgress(0);
     audioService.playClick();
-    showNotification('Đã đổ ly để pha lại ly mới!', 'info');
+
+    const formattedCost = wastedCost.toLocaleString('vi-VN');
+    showNotification(`🗑️ Đã đổ ly! Hao hụt -${formattedCost}đ tiền nguyên liệu (Tính vào tổn thất hôm nay).`, 'warning');
   };
 
   // Determine cup color from added ingredients
@@ -292,6 +325,13 @@ export const CozyKitchenCounter: React.FC<CozyKitchenCounterProps> = ({ onBackTo
   const patiencePct = selectedCustomer 
     ? Math.round((selectedCustomer.remainingPatience / selectedCustomer.maxPatience) * 100) 
     : 100;
+
+  // Check if current cup has any mistake/violation relative to customer preferences
+  const fruitMistakeInCup = !hasAllFruits;
+  const sugarMistakeInCup = sugarStatus === 'violated' || sugarStatus === 'warning';
+  const iceMistakeInCup = iceStatus === 'warning';
+  const milkMistakeInCup = milkStatus === 'violated';
+  const hasMistakeInCup = fruitMistakeInCup || sugarMistakeInCup || iceMistakeInCup || milkMistakeInCup;
 
   return (
     <div className="flex-1 h-full max-h-full w-full max-w-2xl mx-auto flex flex-col justify-between select-none overflow-hidden bg-[#24130A] text-[#3D2619]">
@@ -612,15 +652,25 @@ export const CozyKitchenCounter: React.FC<CozyKitchenCounterProps> = ({ onBackTo
 
               {/* Status and Action Buttons */}
               <div className="flex flex-col gap-1">
-                <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-stone-900 text-white shadow-xs leading-none text-center">
-                  {isBlended ? '✨ Đã xay' : isBlending ? '🌪️ Đang xay' : `${addedIngredients.length} món`}
+                <span className={`text-[10px] font-black px-2 py-0.5 rounded-full shadow-xs leading-none text-center ${
+                  isBlended && hasMistakeInCup
+                    ? 'bg-rose-600 text-white animate-pulse'
+                    : 'bg-stone-900 text-white'
+                }`}>
+                  {isBlended
+                    ? hasMistakeInCup ? '⚠️ Nhầm món' : '✨ Đã xay'
+                    : isBlending ? '🌪️ Đang xay' : `${addedIngredients.length} món`}
                 </span>
 
                 {/* Quick Trash / Reset Cup button */}
                 <button
                   onClick={handleTrashCup}
-                  className="flex items-center gap-1 text-[9.5px] font-black text-rose-200 bg-rose-700/80 hover:bg-rose-600 px-2 py-0.5 rounded-lg border border-rose-900 shadow-2xs active:scale-95 cursor-pointer"
-                  title="Đổ ly làm lại"
+                  className={`flex items-center gap-1 text-[9.5px] font-black px-2 py-0.5 rounded-lg border shadow-2xs active:scale-95 cursor-pointer transition-all ${
+                    hasMistakeInCup
+                      ? 'text-white bg-rose-700 hover:bg-rose-600 border-rose-900 ring-2 ring-rose-400'
+                      : 'text-rose-200 bg-rose-900/80 hover:bg-rose-800 border-rose-950'
+                  }`}
+                  title="Đổ ly làm lại (Tồn thất nguyên liệu đã bỏ vào ly)"
                 >
                   <Trash2 size={10} />
                   <span>Đổ ly</span>
@@ -668,18 +718,26 @@ export const CozyKitchenCounter: React.FC<CozyKitchenCounterProps> = ({ onBackTo
           disabled={!selectedCustomer}
           className={`flex flex-col items-center justify-center p-2 rounded-xl border-2 transition-all cursor-pointer select-none min-w-[70px] sm:min-w-[80px] ${
             isBlended
-              ? 'bg-gradient-to-b from-amber-300 to-amber-500 border-[#3D1E0B] text-stone-900 shadow-xl animate-pulse ring-2 ring-white active:scale-95'
+              ? hasMistakeInCup
+                ? 'bg-gradient-to-b from-rose-400 to-rose-600 border-rose-900 text-white shadow-xl animate-bounce ring-2 ring-rose-300 active:scale-95'
+                : 'bg-gradient-to-b from-amber-300 to-amber-500 border-[#3D1E0B] text-stone-900 shadow-xl animate-pulse ring-2 ring-white active:scale-95'
               : 'bg-white border-[#3D1E0B] text-stone-900 shadow-md'
           }`}
-          title="Bấm chuông để giao món cho khách"
+          title={
+            hasMistakeInCup && isBlended
+              ? '⚠️ Cảnh báo: Ly có lỗi nguyên liệu/đường/đá! Khách sẽ nhận nhưng đánh giá 1 sao. Bạn có thể bấm Đổ ly để pha lại.'
+              : 'Bấm chuông để giao món cho khách'
+          }
         >
           <div className="w-8 h-8 rounded-full bg-amber-400 border border-amber-600 flex items-center justify-center text-lg shadow-sm">
-            🛎️
+            {isBlended && hasMistakeInCup ? '⚠️' : '🛎️'}
           </div>
-          <span className="text-xs font-black mt-0.5 leading-tight text-stone-900">
-            {isBlended ? 'GIAO MÓN' : 'Chuông'}
+          <span className="text-xs font-black mt-0.5 leading-tight">
+            {isBlended ? (hasMistakeInCup ? 'GIAO (LỖI)' : 'GIAO MÓN') : 'Chuông'}
           </span>
-          <span className="text-[9px] font-bold text-amber-950">Bấm giao</span>
+          <span className="text-[9px] font-bold opacity-90">
+            {isBlended && hasMistakeInCup ? 'Sẽ bị 1⭐' : 'Bấm giao'}
+          </span>
         </button>
       </div>
 

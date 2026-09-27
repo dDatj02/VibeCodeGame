@@ -18,6 +18,7 @@ export const Navigation: React.FC = () => {
   const queueCount = useCustomerStore((state) => state.activeCustomers.length);
   const isViral = useReviewStore((state) => state.isViralBoostActive);
   const isCrisis = useReviewStore((state) => state.isCrisisActive);
+  const averageRating = useReviewStore((state) => state.averageRating);
   const recipes = useRecipeStore((state) => state.recipes);
 
   const unlockableRecipesCount = recipes.filter((r) => !r.unlocked).length;
@@ -49,7 +50,7 @@ export const Navigation: React.FC = () => {
       id: 'reviews',
       label: 'Review',
       icon: <Star size={15} />,
-      badge: isCrisis ? '⚠️' : isViral ? '🔥' : undefined,
+      badge: isCrisis || averageRating < 3.5 ? '⚠️' : isViral ? '🔥' : undefined,
     },
     {
       id: 'social',

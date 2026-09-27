@@ -162,4 +162,18 @@ describe('Quán Sinh Tố - Core Game Systems', () => {
     expect(useGameStore.getState().shopName).toBe('Tiệm Sinh Tố Dưa Hấu Chill');
     expect(useGameStore.getState().shopAvatar).toBe('🍉');
   });
+
+  it('TEST 9: Serving drink with mistaken ingredients triggers 100% 1-star review and reduced revenue', () => {
+    const spawned = useCustomerStore.getState().spawnCustomer(['smoothie_mango'], 5)!;
+    expect(spawned).toBeDefined();
+
+    // Serve order with wrong ingredient (e.g. avocado instead of mango)
+    const result = OrderSystem.serveOrder(spawned.id, ['avocado', 'sugar_regular', 'ice_regular']);
+    expect(result.success).toBe(true);
+    expect(result.tip).toBe(0); // 0 tip for mistake
+
+    // The newest review in review store should be 1-star
+    const reviews = useReviewStore.getState().reviews;
+    expect(reviews[0].rating).toBe(1);
+  });
 });

@@ -7,6 +7,7 @@ import { useShopStore } from '../stores/shopStore';
 import { useGameStore } from '../stores/gameStore';
 import { audioService } from '../services/AudioService';
 import { CUSTOMER_ARCHETYPES } from '../data/customers';
+import { IngredientRequirement } from '../types';
 
 export class OrderSystem {
   public static serveOrder(customerId: string, servedIngredients?: string[]): {
@@ -28,97 +29,193 @@ export class OrderSystem {
     }
 
     const invStore = useInventoryStore.getState();
-    if (!invStore.hasEnoughIngredients(recipe.ingredients)) {
+
+    // Map served ingredients (or construct default requirements if servedIngredients omitted)
+    const requiredItems: IngredientRequirement[] = [];
+    
+    if (servedIngredients && servedIngredients.length > 0) {
+      // 1 cup is always consumed
+      requiredItems.push({ ingredientId: 'cup', amount: 1, unit: 'ly' });
+      
+      const counts: Record<string, number> = {};
+      servedIngredients.forEach((ingId) => {
+        const stockId = ingId.startsWith('ice') ? 'ice' : ingId.startsWith('sugar') ? 'sugar' : ingId;
+        counts[stockId] = (counts[stockId] || 0) + 1;
+      });
+
+      Object.entries(counts).forEach(([ingId, amount]) => {
+        requiredItems.push({ ingredientId: ingId, amount, unit: 'phần' });
+      });
+    } else {
+      // Fallback default recipe requirements
+      requiredItems.push(...recipe.ingredients);
+    }
+
+    if (!invStore.hasEnoughIngredients(requiredItems)) {
       audioService.playDisappointed();
       useGameStore.getState().showNotification(`Không đủ nguyên liệu để làm ${recipe.name}! Hãy nhập thêm.`, 'error');
       return { success: false, revenue: 0, tip: 0, message: 'Không đủ nguyên liệu' };
     }
 
-    // Consume ingredients
-    invStore.consumeIngredients(recipe.ingredients);
-    const ingredientCost = invStore.calculateRecipeIngredientCost(recipe.ingredients);
+    // Consume exact used ingredients from inventory
+    invStore.consumeIngredients(requiredItems);
+    const ingredientCost = invStore.calculateRecipeIngredientCost(requiredItems);
 
-    // Calculate tip based on archetype & wait speed
+    // Evaluate mistakes in ingredients, sugar, ice, milk
+    let fruitMistake = false;
+    let sugarMistake = false;
+    let iceMistake = false;
+    let milkMistake = false;
+    const mistakeDetails: string[] = [];
+
+    if (servedIngredients && servedIngredients.length > 0) {
+      // 1. Check Fruits/Special recipe ingredients
+      const requiredFruits = recipe.ingredients
+        .filter((i) => i.ingredientId !== 'milk' && i.ingredientId !== 'sugar' && i.ingredientId !== 'ice' && i.ingredientId !== 'cup')
+        .map((i) => i.ingredientId);
+
+      const servedFruits = servedIngredients.filter(
+        (id) => !id.startsWith('ice') && !id.startsWith('sugar') && id !== 'milk' && id !== 'cup'
+      );
+
+      const missingFruit = requiredFruits.some((rf) => !servedFruits.includes(rf));
+      const wrongFruit = servedFruits.some((sf) => !requiredFruits.includes(sf));
+
+      if (missingFruit || wrongFruit) {
+        fruitMistake = true;
+        mistakeDetails.push('làm nhầm / thiếu trái cây chính');
+      }
+
+      // 2. Check Sugar preference
+      const hasSugarLess = servedIngredients.includes('sugar_less');
+      const hasSugarRegular = servedIngredients.includes('sugar_regular') || servedIngredients.includes('sugar');
+      const hasAnySugar = hasSugarLess || hasSugarRegular;
+
+      if (customer.sugarPreference === 'no_sugar') {
+        if (hasAnySugar) {
+          sugarMistake = true;
+          mistakeDetails.push('cho đường dù đã dặn 0% đường');
+        }
+      } else if (customer.sugarPreference === 'less_sugar') {
+        if (!hasSugarLess) {
+          sugarMistake = true;
+          mistakeDetails.push('không làm đúng 50% đường');
+        }
+      } else { // 'regular' (100%)
+        if (!hasSugarRegular) {
+          sugarMistake = true;
+          mistakeDetails.push('không làm đúng 100% đường chuẩn');
+        }
+      }
+
+      // 3. Check Ice preference
+      const hasIceLess = servedIngredients.includes('ice_less');
+      const hasIceRegular = servedIngredients.includes('ice_regular') || servedIngredients.includes('ice');
+
+      if (customer.icePreference === 'less_ice') {
+        if (!hasIceLess) {
+          iceMistake = true;
+          mistakeDetails.push('không làm đúng 50% đá');
+        }
+      } else { // 'regular' (100%)
+        if (!hasIceRegular) {
+          iceMistake = true;
+          mistakeDetails.push('không làm đúng 100% đá chuẩn');
+        }
+      }
+
+      // 4. Check Milk preference
+      const hasMilk = servedIngredients.includes('milk');
+      if (customer.milkPreference === 'no_milk') {
+        if (hasMilk) {
+          milkMistake = true;
+          mistakeDetails.push('lỡ cho sữa tươi dù dặn không sữa');
+        }
+      } else {
+        if (!hasMilk) {
+          milkMistake = true;
+          mistakeDetails.push('thiếu sữa tươi');
+        }
+      }
+    }
+
+    const hasAnyMistake = fruitMistake || sugarMistake || iceMistake || milkMistake;
+
     const archetype = CUSTOMER_ARCHETYPES.find((a) => a.id === customer.archetypeId);
     const patienceRatio = customer.remainingPatience / customer.maxPatience;
     let tip = 0;
+    let totalRevenue = 0;
 
-    // Customization compliance check
-    let customizationBonus = 0;
-    let customizationViolated = false;
+    if (hasAnyMistake) {
+      // Penalty for mistake: 0 tip, revenue cut by 50%, 100% GUARANTEED 1-STAR BAD REVIEW
+      tip = 0;
+      totalRevenue = Math.round(recipe.currentSellingPrice * 0.5);
+      audioService.playDisappointed();
 
-    if (servedIngredients && servedIngredients.length > 0) {
-      const hasAnySugar = servedIngredients.some((id) => id === 'sugar' || id === 'sugar_regular' || id === 'sugar_less');
-      const hasSugarLess = servedIngredients.includes('sugar_less');
-      const hasSugarRegular = servedIngredients.includes('sugar_regular') || servedIngredients.includes('sugar');
-
-      const hasIceLess = servedIngredients.includes('ice_less');
-      const hasIceRegular = servedIngredients.includes('ice_regular') || servedIngredients.includes('ice');
-      const hasAnyIce = hasIceLess || hasIceRegular;
-
-      const hasMilk = servedIngredients.includes('milk');
-
-      // Sugar check
-      if (customer.sugarPreference === 'no_sugar') {
-        if (!hasAnySugar) customizationBonus += 0.5;
-        else customizationViolated = true;
-      } else if (customer.sugarPreference === 'less_sugar') {
-        if (hasSugarLess) customizationBonus += 0.5;
-        else if (hasSugarRegular) customizationViolated = true;
+      // Always publish 1-star review for mistake
+      let comment = `Làm sai ly rồi! (${mistakeDetails.join(', ')}). Rất thất vọng, 1 sao cạch mặt quán!`;
+      if (fruitMistake) {
+        comment = `Tôi gọi ${recipe.name} mà làm sai lộn trái cây nguyên liệu! Uống không ra làm sao cả. 1 sao!`;
+      } else if (sugarMistake) {
+        comment = `Quán làm sai mức đường của tôi rồi! Đã dặn kỹ mà làm không đúng. 1 sao!`;
+      } else if (iceMistake) {
+        comment = `Tôi dặn lượng đá khác mà quán làm nhầm đá! Phục vụ quá kém, 1 sao!`;
+      } else if (milkMistake) {
+        comment = `Tôi dặn không cho sữa mà vẫn làm ẩu cho sữa vào! Quá cẩu thả, 1 sao!`;
       }
 
-      // Ice check (smoothies always have ice: less_ice vs regular)
-      if (customer.icePreference === 'less_ice') {
-        if (hasIceLess) customizationBonus += 0.5;
-        else if (hasIceRegular) customizationViolated = true;
-      } else {
-        if (hasIceRegular) customizationBonus += 0.2;
+      useReviewStore.getState().addReview({
+        authorName: customer.name,
+        avatar: '😠',
+        rating: 1,
+        comment,
+        day: useGameStore.getState().day,
+        recipeName: recipe.name,
+        helpfulCount: Math.floor(Math.random() * 4) + 1,
+        aspect: fruitMistake ? 'quality' : 'service',
+      });
+
+      useGameStore.getState().showNotification(
+        `❌ ${customer.name} rất tức giận vì nhận ly sai yêu cầu! Đã để lại đánh giá 1 sao (Trừ 50% tiền món)`,
+        'error'
+      );
+    } else {
+      // Perfect order!
+      const customizationBonus = 0.5;
+      if (archetype && (Math.random() < archetype.tipChance || customizationBonus > 0) && patienceRatio > 0.35) {
+        const baseTip = 5000 + Math.random() * 10000 + 5000;
+        tip = Math.round((baseTip * archetype.budgetMultiplier) / 1000) * 1000;
       }
 
-      // Milk check
-      if (customer.milkPreference === 'no_milk') {
-        if (!hasMilk) customizationBonus += 0.5;
-        else customizationViolated = true;
+      totalRevenue = recipe.currentSellingPrice + tip;
+
+      audioService.playBlender(0.8);
+      setTimeout(() => {
+        audioService.playCashRegister();
+      }, 300);
+
+      // Cleanliness factor & review
+      const cleanliness = useShopStore.getState().cleanliness;
+      const cleanlinessFactor = cleanliness / 100;
+      const satisfaction = Math.min(
+        5,
+        Math.max(4, Number((3.5 + patienceRatio * 1.0 + (cleanlinessFactor - 0.5) * 0.8).toFixed(1)))
+      );
+
+      if (Math.random() < 0.6) {
+        this.generateReviewForOrder(customer.name, recipe.name, satisfaction, patienceRatio, cleanliness, false);
       }
+
+      const tipMsg = tip > 0 ? ` (+${tip.toLocaleString('vi-VN')}đ tiền tip!)` : '';
+      useGameStore.getState().showNotification(`✨ Đã phục vụ hoàn hảo ${recipe.name} cho ${customer.name}${tipMsg}`, 'success');
     }
-
-    if (archetype && (Math.random() < archetype.tipChance || customizationBonus > 0) && patienceRatio > 0.35 && !customizationViolated) {
-      // 5.000đ to 15.000đ tip (extra bonus if custom request honored)
-      const baseTip = 5000 + Math.random() * 10000 + (customizationBonus > 0 ? 5000 : 0);
-      tip = Math.round((baseTip * archetype.budgetMultiplier) / 1000) * 1000;
-    }
-
-    const totalRevenue = recipe.currentSellingPrice + tip;
 
     // Credit cash
     useEconomyStore.getState().addCash(totalRevenue);
     custStore.recordSale(totalRevenue, ingredientCost);
 
-    // Play sounds
-    audioService.playBlender(0.8);
-    setTimeout(() => {
-      audioService.playCashRegister();
-    }, 400);
-
-    // Calculate satisfaction (1.0 to 5.0)
-    const cleanliness = useShopStore.getState().cleanliness;
-    const cleanlinessFactor = cleanliness / 100;
-    let satisfaction = Math.min(
-      5,
-      Math.max(1, Number((2.0 + patienceRatio * 2.0 + (cleanlinessFactor - 0.5) * 1.0 + customizationBonus - (customizationViolated ? 1.5 : 0)).toFixed(1)))
-    );
-
-    // Chance to write a review (boosted so players see reviews regularly)
-    const reviewChance = (satisfaction >= 4.5 || customizationBonus > 0) ? 0.55 : satisfaction <= 2.5 ? 0.7 : 0.4;
-    if (Math.random() < reviewChance) {
-      this.generateReviewForOrder(customer.name, recipe.name, satisfaction, patienceRatio, cleanliness, customizationViolated);
-    }
-
     // Remove customer
     custStore.serveCustomer(customerId);
-
-    const tipMsg = tip > 0 ? ` (+${tip.toLocaleString('vi-VN')}đ tiền tip!)` : '';
-    useGameStore.getState().showNotification(`Đã phục vụ ${recipe.name} cho ${customer.name}${tipMsg}`, 'success');
 
     return { success: true, revenue: totalRevenue, tip };
   }
@@ -148,7 +245,7 @@ export class OrderSystem {
     } else if (stars === 4) {
       const fourStarComments = [
         `Ngon, hương vị tươi mát. Điểm trừ nhẹ là quán vỉa hè giờ cao điểm hơi đông một tí.`,
-        `${recipeName} rất ổn áp, giá cả hợp lý so với mặt bằng chung. Sẽ ghé lại.`,
+        `${recipeName} rất ổn áp, giá cả hợp lý so me với mặt bằng chung. Sẽ ghé lại.`,
         `Uống thanh mát, đúng yêu cầu ít ngọt của mình. Rất ưng bụng.`,
       ];
       comment = fourStarComments[Math.floor(Math.random() * fourStarComments.length)];

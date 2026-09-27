@@ -69,8 +69,23 @@ export class DayCycleSystem {
     else if (game.weather === 'rain') trafficMultiplier *= 0.75;
     else if (game.weather === 'storm') trafficMultiplier *= 0.5;
 
-    // Viral boost impact
+    // Rating impact: starts reducing traffic progressively when averageRating < 3.5
     const rev = useReviewStore.getState();
+    const avgRating = rev.averageRating;
+    let ratingMultiplier = 1.0;
+
+    if (avgRating < 3.5) {
+      // Linear penalty from 1.0 (at 3.5★) down to 0.1 (at 1.0★)
+      const drop = (3.5 - avgRating) / 2.5;
+      ratingMultiplier = Math.max(0.1, Number((1.0 - drop * 0.9).toFixed(2)));
+    } else if (avgRating >= 4.5) {
+      // High rating popularity boost
+      ratingMultiplier = 1.15;
+    }
+
+    trafficMultiplier *= ratingMultiplier;
+
+    // Viral boost impact
     if (rev.isViralBoostActive) trafficMultiplier *= 1.8;
     if (rev.isCrisisActive) trafficMultiplier *= 0.5;
 

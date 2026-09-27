@@ -97,7 +97,40 @@ export const ReviewsTab: React.FC = () => {
           </div>
         </div>
 
-        {/* 2. Viral Boost or Crisis Banner */}
+        {/* 2. Rating Traffic Impact Banner */}
+        {averageRating < 3.5 && (
+          <div className="p-2 bg-rose-50 border border-rose-300 rounded-xl mt-1 flex items-center justify-between text-rose-950 shadow-2xs">
+            <div className="flex items-center gap-1.5">
+              <AlertOctagon className="text-rose-600 shrink-0" size={18} />
+              <div>
+                <span className="text-[11px] font-black text-rose-900">
+                  Lượng Khách Giảm Do Đánh Giá Thấp! ({averageRating}★)
+                </span>
+                <p className="text-[9.5px] text-rose-800 font-medium">
+                  Điểm sao dưới 3.5★ khiến khách e dè. Lượng khách tới tiệm bị sụt giảm -{Math.round(((3.5 - averageRating) / 2.5) * 90)}%!
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {averageRating >= 4.5 && (
+          <div className="p-2 bg-emerald-50 border border-emerald-300 rounded-xl mt-1 flex items-center justify-between text-emerald-950 shadow-2xs">
+            <div className="flex items-center gap-1.5">
+              <Star className="text-amber-500 fill-amber-400 shrink-0" size={18} />
+              <div>
+                <span className="text-[11px] font-black text-emerald-900">
+                  Tiệm Rất Được Khách Yêu Thích! ({averageRating}★)
+                </span>
+                <p className="text-[9.5px] text-emerald-800 font-medium">
+                  Uy tín 5 sao giúp quán thu hút đông đảo khách ghé thăm (+15% lượt khách)!
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* 3. Viral Boost or Crisis Banner */}
         {isViral && (
           <div className="p-2 bg-amber-50 border border-amber-300 rounded-xl mt-1 flex items-center justify-between text-amber-900 shadow-2xs">
             <div className="flex items-center gap-1.5">
