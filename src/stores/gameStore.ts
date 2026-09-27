@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { WeatherType, DailyReport, DailyQuest } from '../types';
 import { EventDefinition } from '../data/events';
+import { useCustomerStore } from './customerStore';
 
 export type ShopDayPhase = 'prep' | 'open' | 'day_ended';
 export type NavigationTab = 'shop' | 'inventory' | 'recipes' | 'finance' | 'reviews' | 'social' | 'upgrades';
@@ -158,12 +159,12 @@ export const useGameStore = create<GameState>((set, get) => ({
   setActiveTab: (tab) => set({ activeTab: tab }),
 
   openShopForDay: () => {
-    set({
+    set((state) => ({
       phase: 'open',
-      timeMinutes: START_TIME,
+      timeMinutes: state.phase === 'prep' ? START_TIME : state.timeMinutes,
       isPaused: false,
       activeTab: 'shop',
-    });
+    }));
   },
 
   tickGameTime: (deltaMinutes: number) => {
@@ -190,10 +191,15 @@ export const useGameStore = create<GameState>((set, get) => ({
     const nextDayNum = get().day + 1;
     const randomWeather = WEATHERS[Math.floor(Math.random() * WEATHERS.length)];
 
+    // Reset customer daily metrics & clear queue for new day
+    const custStore = useCustomerStore.getState();
+    custStore.resetDailyCustomerMetrics();
+    custStore.clearQueue();
+
     set({
       day: nextDayNum,
       timeMinutes: START_TIME,
-      phase: 'prep',
+      phase: 'open',
       weather: randomWeather,
       activeDailyReport: null,
       isPaused: false,
