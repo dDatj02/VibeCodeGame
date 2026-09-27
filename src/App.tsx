@@ -1,0 +1,79 @@
+import React, { useEffect, useRef } from 'react';
+import { useGameStore } from './stores/gameStore';
+import { Header } from './components/common/Header';
+import { Navigation } from './components/common/Navigation';
+import { NotificationToast } from './components/common/NotificationToast';
+import { ShopTab } from './components/tabs/ShopTab';
+import { InventoryTab } from './components/tabs/InventoryTab';
+import { RecipesTab } from './components/tabs/RecipesTab';
+import { FinanceTab } from './components/tabs/FinanceTab';
+import { ReviewsTab } from './components/tabs/ReviewsTab';
+import { SocialTab } from './components/tabs/SocialTab';
+import { UpgradesTab } from './components/tabs/UpgradesTab';
+import { DailyReportModal } from './components/modals/DailyReportModal';
+import { EventModal } from './components/modals/EventModal';
+import { BankruptcyModal } from './components/modals/BankruptcyModal';
+import { DayCycleSystem } from './systems/DayCycleSystem';
+import { SaveService } from './services/SaveService';
+
+export const App: React.FC = () => {
+  const activeTab = useGameStore((state) => state.activeTab);
+  const lastTimeRef = useRef<number>(performance.now());
+  const animationFrameRef = useRef<number | null>(null);
+
+  // Initialize saved progress on startup
+  useEffect(() => {
+    SaveService.loadGame();
+  }, []);
+
+  // Main Simulation Loop
+  useEffect(() => {
+    const loop = (currentTime: number) => {
+      const deltaMs = currentTime - lastTimeRef.current;
+      lastTimeRef.current = currentTime;
+
+      // Delta in seconds, clamp to avoid huge jumps if tab was backgrounded
+      const deltaSeconds = Math.min(0.2, deltaMs / 1000);
+      DayCycleSystem.tick(deltaSeconds);
+
+      animationFrameRef.current = requestAnimationFrame(loop);
+    };
+
+    animationFrameRef.current = requestAnimationFrame(loop);
+
+    return () => {
+      if (animationFrameRef.current) {
+        cancelAnimationFrame(animationFrameRef.current);
+      }
+    };
+  }, []);
+
+  return (
+    <div className="flex flex-col h-[100dvh] max-h-[100dvh] w-full overflow-hidden bg-[#FAF4ED] font-['Nunito',sans-serif] text-[#3D2619] select-none antialiased fixed inset-0">
+      {/* 1. Header (Top Bar Contract: wordmark, vital meters, controls) */}
+      <Header />
+
+      {/* 2. Main Game Body Screen */}
+      <main className="flex-1 min-h-0 relative flex flex-col overflow-hidden">
+        {activeTab === 'shop' && <ShopTab />}
+        {activeTab === 'inventory' && <InventoryTab />}
+        {activeTab === 'recipes' && <RecipesTab />}
+        {activeTab === 'finance' && <FinanceTab />}
+        {activeTab === 'reviews' && <ReviewsTab />}
+        {activeTab === 'social' && <SocialTab />}
+        {activeTab === 'upgrades' && <UpgradesTab />}
+      </main>
+
+      {/* 3. Bottom Navigation Bar */}
+      <Navigation />
+
+      {/* 4. Global Modals & Feedback */}
+      <NotificationToast />
+      <DailyReportModal />
+      <EventModal />
+      <BankruptcyModal />
+    </div>
+  );
+};
+
+export default App;

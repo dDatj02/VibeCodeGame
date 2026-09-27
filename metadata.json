@@ -1,0 +1,6 @@
+{
+  "name": "Quán Sinh Tố - Smoothie Hustle",
+  "description": "Casual Vietnamese smoothie business tycoon & simulation game. Run your street cart, blend tropical drinks, handle reviews, manage loans, and build a beverage empire.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
