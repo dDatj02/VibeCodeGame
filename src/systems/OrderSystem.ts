@@ -108,8 +108,8 @@ export class OrderSystem {
       Math.max(1, Number((2.0 + patienceRatio * 2.0 + (cleanlinessFactor - 0.5) * 1.0 + customizationBonus - (customizationViolated ? 1.5 : 0)).toFixed(1)))
     );
 
-    // Chance to write a review
-    const reviewChance = archetype ? (satisfaction >= 4.5 ? 0.35 : satisfaction <= 2.0 ? 0.6 : 0.15) : 0.2;
+    // Chance to write a review (boosted so players see reviews regularly)
+    const reviewChance = (satisfaction >= 4.5 || customizationBonus > 0) ? 0.55 : satisfaction <= 2.5 ? 0.7 : 0.4;
     if (Math.random() < reviewChance) {
       this.generateReviewForOrder(customer.name, recipe.name, satisfaction, patienceRatio, cleanliness, customizationViolated);
     }
@@ -188,5 +188,11 @@ export class OrderSystem {
       helpfulCount: Math.floor(Math.random() * 5),
       aspect,
     });
+
+    // Notify player that a new review was published
+    useGameStore.getState().showNotification(
+      `⭐ ${authorName} vừa đánh giá ${stars} sao cho quán!`,
+      stars >= 4 ? 'success' : stars === 3 ? 'info' : 'warning'
+    );
   }
 }

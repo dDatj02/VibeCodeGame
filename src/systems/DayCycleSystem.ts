@@ -51,6 +51,7 @@ export class DayCycleSystem {
             helpfulCount: 2,
             aspect: 'speed',
           });
+          useGameStore.getState().showNotification(`⭐ ${cust.name} đã để lại đánh giá 1 sao vì chờ quá lâu!`, 'error');
         }
       });
     }

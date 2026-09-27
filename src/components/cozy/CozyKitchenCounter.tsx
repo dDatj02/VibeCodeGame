@@ -196,6 +196,45 @@ export const CozyKitchenCounter: React.FC<CozyKitchenCounterProps> = ({ onBackTo
     }
   };
 
+  // Helper: Get icon for ingredients
+  const getIngredientIcon = (id: string): string => {
+    switch (id) {
+      case 'avocado': return '🥑';
+      case 'mango': return '🥭';
+      case 'strawberry': return '🍓';
+      case 'banana': return '🍌';
+      case 'coconut_milk': return '🥥';
+      case 'whey_protein': return '💪';
+      case 'chia_seeds': return '🌱';
+      case 'milk': return '🥛';
+      case 'sugar': return '🍬';
+      case 'ice': return '🧊';
+      default: return ingredients.find((i) => i.id === id)?.icon || '🍉';
+    }
+  };
+
+  // Helper: Color styles for fruit badge icons
+  const getFruitColorStyle = (id: string) => {
+    switch (id) {
+      case 'avocado':
+        return 'bg-emerald-100 border-emerald-400 text-emerald-900';
+      case 'mango':
+        return 'bg-amber-100 border-amber-400 text-amber-900';
+      case 'strawberry':
+        return 'bg-rose-100 border-rose-400 text-rose-900';
+      case 'banana':
+        return 'bg-yellow-100 border-yellow-400 text-yellow-900';
+      case 'coconut_milk':
+        return 'bg-sky-100 border-sky-400 text-sky-900';
+      case 'whey_protein':
+        return 'bg-purple-100 border-purple-400 text-purple-900';
+      case 'chia_seeds':
+        return 'bg-stone-200 border-stone-400 text-stone-900';
+      default:
+        return 'bg-orange-100 border-orange-400 text-orange-900';
+    }
+  };
+
   // Checklist verification for active recipe & custom customer preferences
   const hasIceLess = addedIngredients.includes('ice_less');
   const hasIceRegular = addedIngredients.includes('ice_regular') || addedIngredients.includes('ice');
@@ -298,8 +337,8 @@ export const CozyKitchenCounter: React.FC<CozyKitchenCounterProps> = ({ onBackTo
         </div>
       </div>
 
-      {/* 2. CUSTOMER COUNTER & ORDER BOARD (Spacious 2-column layout) */}
-      <div className="relative flex-1 min-h-[175px] max-h-[220px] bg-gradient-to-b from-[#A96A3D] via-[#92552B] to-[#7B421E] px-3 py-2 flex items-center justify-between gap-3 overflow-hidden border-b-4 border-[#45200C]">
+      {/* 2. CUSTOMER COUNTER & ORDER BOARD (Responsive, perfectly centered layout) */}
+      <div className="relative flex-1 min-h-[175px] max-h-[220px] bg-gradient-to-b from-[#A96A3D] via-[#92552B] to-[#7B421E] px-2 sm:px-4 py-2 flex items-center justify-center sm:justify-between gap-2 sm:gap-4 overflow-hidden border-b-4 border-[#45200C]">
         
         {/* Background Wooden Paneling & Arched Windows */}
         <div className="absolute inset-0 pointer-events-none opacity-20">
@@ -311,16 +350,26 @@ export const CozyKitchenCounter: React.FC<CozyKitchenCounterProps> = ({ onBackTo
         </div>
 
         {/* Left Side: Animated Animal Customer Behind Counter */}
-        <div className="relative z-10 flex flex-col items-center justify-end h-full shrink-0 w-28 sm:w-36">
+        <div className="relative z-10 flex flex-col items-center justify-end h-full shrink-0 w-20 sm:w-28 md:w-36">
           {selectedCustomer ? (
             <div className="flex flex-col items-center">
-              <CozyCustomerCharacter
-                archetypeId={selectedCustomer.archetypeId}
-                isSelected={true}
-                size="md"
-                isPatienceLow={patiencePct <= 35}
-              />
-              <span className="text-[11px] font-black text-amber-100 bg-[#351A0B]/80 px-2 py-0.5 rounded-full border border-amber-900/60 mt-0.5 shadow-xs truncate max-w-[120px]">
+              <div className="hidden sm:block">
+                <CozyCustomerCharacter
+                  archetypeId={selectedCustomer.archetypeId}
+                  isSelected={true}
+                  size="md"
+                  isPatienceLow={patiencePct <= 35}
+                />
+              </div>
+              <div className="block sm:hidden">
+                <CozyCustomerCharacter
+                  archetypeId={selectedCustomer.archetypeId}
+                  isSelected={true}
+                  size="sm"
+                  isPatienceLow={patiencePct <= 35}
+                />
+              </div>
+              <span className="text-[10px] sm:text-[11px] font-black text-amber-100 bg-[#351A0B]/80 px-1.5 sm:px-2 py-0.5 rounded-full border border-amber-900/60 mt-0.5 shadow-xs truncate max-w-[85px] sm:max-w-[120px]">
                 {selectedCustomer.name}
               </span>
             </div>
@@ -333,39 +382,39 @@ export const CozyKitchenCounter: React.FC<CozyKitchenCounterProps> = ({ onBackTo
 
         {/* Right Side: The Order Ticket (Cafe Clipboard Note) */}
         {selectedCustomer && desiredRecipe ? (
-          <div className="relative z-10 flex-1 max-w-[290px] bg-[#FFFBF0] border-2 border-[#3D1E0B] rounded-2xl p-2 sm:p-2.5 shadow-xl flex flex-col justify-between">
+          <div className="relative z-10 flex-1 min-w-0 max-w-[280px] sm:max-w-[310px] bg-[#FFFBF0] border-2 border-[#3D1E0B] rounded-2xl p-2 sm:p-2.5 shadow-xl flex flex-col justify-between">
             {/* Ticket Header */}
-            <div className="bg-[#3D1E0B] text-amber-200 -mx-2 -mt-2 sm:-mx-2.5 sm:-mt-2.5 px-3 py-1.5 rounded-t-xl flex items-center justify-between shadow-xs">
-              <div className="flex items-center gap-1.5 truncate">
-                <span className="text-base">{desiredRecipe.icon}</span>
+            <div className="bg-[#3D1E0B] text-amber-200 -mx-2 -mt-2 sm:-mx-2.5 sm:-mt-2.5 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-t-xl flex items-center justify-between shadow-xs">
+              <div className="flex items-center gap-1.5 min-w-0 truncate">
+                <span className="text-base shrink-0">{desiredRecipe.icon}</span>
                 <span className="font-['Comfortaa'] text-xs font-black text-amber-100 truncate">
                   {desiredRecipe.name}
                 </span>
               </div>
-              <span className="bg-amber-600 text-white text-[10px] font-black px-1.5 py-0.5 rounded tabular-nums shrink-0 ml-1">
+              <span className="bg-amber-600 text-white text-[9.5px] sm:text-[10px] font-black px-1.5 py-0.5 rounded tabular-nums shrink-0 ml-1">
                 {formatVND(desiredRecipe.currentSellingPrice)}
               </span>
             </div>
 
             {/* Special Request Dialogue / Note */}
             {selectedCustomer.customNote && (
-              <div className="mt-1 px-2 py-0.5 rounded-md bg-amber-100/90 border border-amber-300 text-[9.5px] font-black text-amber-950 flex items-center gap-1 truncate shadow-2xs">
-                <span>💬</span>
+              <div className="mt-1 px-2 py-0.5 rounded-md bg-amber-100/90 border border-amber-300 text-[9px] sm:text-[9.5px] font-black text-amber-950 flex items-center gap-1 min-w-0 shadow-2xs">
+                <span className="shrink-0">💬</span>
                 <span className="truncate">{selectedCustomer.customNote}</span>
               </div>
             )}
 
             {/* Checklist of 6 Steps (2 Columns, Dynamic Customization & Vietnamese Fruits) */}
-            <div className="grid grid-cols-2 gap-x-2 gap-y-1.5 my-1.5 text-[11px] font-black">
+            <div className="grid grid-cols-2 gap-x-1.5 sm:gap-x-2 gap-y-1 my-1 text-[10px] sm:text-[11px] font-black">
               {/* Step 1: Cup */}
-              <div className={`flex items-center gap-1.5 ${hasCup ? 'text-emerald-700' : 'text-stone-600'}`}>
-                <span>{hasCup ? '✅' : '⚪'}</span>
-                <span>1. Lấy ly</span>
+              <div className={`flex items-center gap-1 min-w-0 ${hasCup ? 'text-emerald-700' : 'text-stone-600'}`}>
+                <span className="shrink-0">{hasCup ? '✅' : '⚪'}</span>
+                <span className="truncate">1. Lấy ly</span>
               </div>
 
               {/* Step 2: Ice (Always required in smoothies: Ít đá vs Đá chuẩn) */}
               <div
-                className={`flex items-center gap-1.5 ${
+                className={`flex items-center gap-1 min-w-0 ${
                   iceStatus === 'correct'
                     ? 'text-emerald-700'
                     : iceStatus === 'warning'
@@ -373,25 +422,15 @@ export const CozyKitchenCounter: React.FC<CozyKitchenCounterProps> = ({ onBackTo
                     : 'text-stone-600'
                 }`}
               >
-                <span>{iceStatus === 'correct' ? '✅' : iceStatus === 'warning' ? '⚠️' : '⚪'}</span>
+                <span className="shrink-0">{iceStatus === 'correct' ? '✅' : iceStatus === 'warning' ? '⚠️' : '⚪'}</span>
                 <span className="truncate">
-                  {wantsLessIce
-                    ? hasIceLess
-                      ? '2. Đã cho Ít đá'
-                      : hasIceRegular
-                      ? '2. Dư đá (khách dặn ít đá)'
-                      : '2. Ít đá'
-                    : hasIceRegular
-                    ? '2. Đã cho Đá chuẩn'
-                    : hasIceLess
-                    ? '2. Thiếu đá (khách dặn chuẩn)'
-                    : '2. Đá chuẩn'}
+                  {wantsLessIce ? '2. Ít đá' : '2. Đá chuẩn'}
                 </span>
               </div>
 
               {/* Step 3: Milk (Customizable: No milk / Regular) */}
               <div
-                className={`flex items-center gap-1.5 ${
+                className={`flex items-center gap-1 min-w-0 ${
                   milkStatus === 'violated'
                     ? 'text-rose-600 font-black'
                     : milkStatus === 'correct'
@@ -399,7 +438,7 @@ export const CozyKitchenCounter: React.FC<CozyKitchenCounterProps> = ({ onBackTo
                     : 'text-stone-600'
                 }`}
               >
-                <span>{milkStatus === 'violated' ? '❌' : milkStatus === 'correct' ? '✅' : '⚪'}</span>
+                <span className="shrink-0">{milkStatus === 'violated' ? '❌' : milkStatus === 'correct' ? '✅' : '⚪'}</span>
                 <span className="truncate">
                   {milkStatus === 'violated'
                     ? '3. Lỡ cho sữa!'
@@ -411,7 +450,7 @@ export const CozyKitchenCounter: React.FC<CozyKitchenCounterProps> = ({ onBackTo
 
               {/* Step 4: Sugar (Customizable: No sugar / Less sugar / Regular) */}
               <div
-                className={`flex items-center gap-1.5 ${
+                className={`flex items-center gap-1 min-w-0 ${
                   sugarStatus === 'violated'
                     ? 'text-rose-600 font-black'
                     : sugarStatus === 'correct'
@@ -421,7 +460,7 @@ export const CozyKitchenCounter: React.FC<CozyKitchenCounterProps> = ({ onBackTo
                     : 'text-stone-600'
                 }`}
               >
-                <span>
+                <span className="shrink-0">
                   {sugarStatus === 'violated'
                     ? '❌'
                     : sugarStatus === 'correct'
@@ -431,36 +470,52 @@ export const CozyKitchenCounter: React.FC<CozyKitchenCounterProps> = ({ onBackTo
                     : '⚪'}
                 </span>
                 <span className="truncate">
-                  {wantsNoSugar
-                    ? hasAnySugar
-                      ? '4. Lỡ cho đường!'
-                      : '4. Không đường'
+                  {sugarStatus === 'violated'
+                    ? '4. Lỡ cho đường!'
+                    : wantsNoSugar
+                    ? '4. Không đường'
                     : wantsLessSugar
-                    ? hasSugarLess
-                      ? '4. Đã cho Ít đường'
-                      : hasSugarRegular
-                      ? '4. Quá ngọt (khách dặn ít)'
-                      : '4. Ít đường'
-                    : hasSugarRegular
-                    ? '4. Đã cho Đường chuẩn'
-                    : hasSugarLess
-                    ? '4. Thiếu ngọt (khách dặn chuẩn)'
+                    ? '4. Ít đường'
                     : '4. Đường ngọt'}
                 </span>
               </div>
 
-              {/* Step 5: Vietnamese Fruit(s) & Mix Combo */}
-              <div className={`flex items-center gap-1.5 ${hasAllFruits ? 'text-emerald-700' : 'text-stone-600'}`}>
-                <span>{hasAllFruits ? '✅' : '⚪'}</span>
-                <span className="truncate" title={fruitTextVi}>
-                  5. {fruitTextVi}
-                </span>
+              {/* Step 5: Fruit icon(s) only - vibrant, colorful badges */}
+              <div className={`flex items-center gap-1 min-w-0 ${hasAllFruits ? 'text-emerald-700' : 'text-stone-600'}`}>
+                <span className="shrink-0">{hasAllFruits ? '✅' : '⚪'}</span>
+                <span className="shrink-0 font-black">5.</span>
+                <div className="flex items-center gap-1 font-black min-w-0">
+                  {requiredFruits.map((rf, idx) => {
+                    const isAdded = addedIngredients.includes(rf.ingredientId);
+                    const colorStyle = getFruitColorStyle(rf.ingredientId);
+                    return (
+                      <span key={rf.ingredientId} className="inline-flex items-center shrink-0">
+                        {idx > 0 && <span className="text-xs text-stone-400 mx-0.5 font-black">+</span>}
+                        <span
+                          className={`relative inline-flex items-center justify-center w-6 h-6 sm:w-7 sm:h-7 rounded-lg border-2 transition-all shadow-2xs ${colorStyle} ${
+                            isAdded
+                              ? 'ring-2 ring-emerald-500 scale-105 shadow-sm'
+                              : 'shadow-2xs'
+                          }`}
+                          title={`${getIngredientViName(rf.ingredientId)}: ${isAdded ? 'Đã cho' : 'Chưa cho'}`}
+                        >
+                          <span className="leading-none select-none text-sm sm:text-base drop-shadow-2xs">{getIngredientIcon(rf.ingredientId)}</span>
+                          {isAdded && (
+                            <span className="absolute -top-1 -right-1 bg-emerald-600 text-white rounded-full w-3 h-3 sm:w-3.5 sm:h-3.5 flex items-center justify-center text-[7px] sm:text-[8px] font-black ring-1 ring-white">
+                              ✓
+                            </span>
+                          )}
+                        </span>
+                      </span>
+                    );
+                  })}
+                </div>
               </div>
 
               {/* Step 6: Blender */}
-              <div className={`flex items-center gap-1.5 ${isBlended ? 'text-emerald-700' : 'text-stone-600'}`}>
-                <span>{isBlended ? '✅' : '⚪'}</span>
-                <span>6. Xay nhuyễn</span>
+              <div className={`flex items-center gap-1 min-w-0 ${isBlended ? 'text-emerald-700' : 'text-stone-600'}`}>
+                <span className="shrink-0">{isBlended ? '✅' : '⚪'}</span>
+                <span className="truncate">6. Xay nhuyễn</span>
               </div>
             </div>
 
