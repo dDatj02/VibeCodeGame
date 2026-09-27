@@ -13,6 +13,7 @@ import { UpgradesTab } from './components/tabs/UpgradesTab';
 import { DailyReportModal } from './components/modals/DailyReportModal';
 import { EventModal } from './components/modals/EventModal';
 import { BankruptcyModal } from './components/modals/BankruptcyModal';
+import { PWAInstallBanner } from './components/common/PWAInstallBanner';
 import { DayCycleSystem } from './systems/DayCycleSystem';
 import { SaveService } from './services/SaveService';
 
@@ -68,6 +69,7 @@ export const App: React.FC = () => {
       <Navigation />
 
       {/* 4. Global Modals & Feedback */}
+      <PWAInstallBanner />
       <NotificationToast />
       <DailyReportModal />
       <EventModal />
