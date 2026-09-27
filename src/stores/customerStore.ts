@@ -93,14 +93,15 @@ export const useCustomerStore = create<CustomerState>((set, get) => ({
 
     // Build Vietnamese custom note
     const notes: string[] = [];
-    if (sugar === 'no_sugar') notes.push('Không đường');
-    else if (sugar === 'less_sugar') notes.push('Ít đường');
+    if (sugar === 'no_sugar') notes.push('0% đường');
+    else if (sugar === 'less_sugar') notes.push('50% đường (ít ngọt)');
+    else notes.push('100% đường (chuẩn)');
 
     if (ice === 'less_ice') notes.push('Ít đá');
 
-    if (milk === 'no_milk') notes.push('Không sữa (thuần chay)');
+    if (milk === 'no_milk') notes.push('Không sữa');
 
-    const customNote = notes.length > 0 ? `Dặn dò: ${notes.join(' · ')}` : 'Dặn dò: Chuẩn vị quán';
+    const customNote = `Dặn dò: ${notes.join(' · ')}`;
 
     const newCustomer: ActiveCustomer = {
       id: `cust_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,

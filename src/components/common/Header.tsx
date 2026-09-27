@@ -6,7 +6,8 @@ import { useShopStore } from '../../stores/shopStore';
 import { formatVND, formatGameTime } from '../../utils/format';
 import { audioService } from '../../services/AudioService';
 import { SaveService } from '../../services/SaveService';
-import { Volume2, VolumeX, Play, Pause, FastForward, RotateCcw, Save, UtensilsCrossed } from 'lucide-react';
+import { Volume2, VolumeX, Play, Pause, FastForward, RotateCcw, Save, UtensilsCrossed, Edit2 } from 'lucide-react';
+import { ShopProfileModal } from '../modals/ShopProfileModal';
 
 export const Header: React.FC = () => {
   const { 
@@ -17,6 +18,7 @@ export const Header: React.FC = () => {
     isPaused, 
     weather, 
     shopName, 
+    shopAvatar,
     setGameSpeed, 
     togglePause, 
     openShopForDay,
@@ -30,6 +32,7 @@ export const Header: React.FC = () => {
   const currentShopLevel = useShopStore((state) => state.currentShopLevel);
 
   const [soundOn, setSoundOn] = useState(true);
+  const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
 
   const toggleSound = () => {
     const next = !soundOn;
@@ -58,20 +61,29 @@ export const Header: React.FC = () => {
       <div className="max-w-5xl mx-auto flex flex-col gap-1">
         {/* Row 1: Brand & Level on the left, ALL Action Tool Buttons on the right */}
         <div className="flex items-center justify-between w-full gap-1">
-          {/* Brand & Level */}
-          <div className="flex items-center gap-1.5 min-w-0">
-            <div className="w-6 h-6 rounded-lg bg-[#F26440] text-white flex items-center justify-center font-black text-xs shadow-2xs shrink-0">
-              🍹
+          {/* Brand & Level (Clickable to customize name & avatar) */}
+          <button
+            type="button"
+            onClick={() => {
+              audioService.playClick();
+              setIsProfileModalOpen(true);
+            }}
+            className="flex items-center gap-1.5 min-w-0 px-1 py-0.5 -ml-1 rounded-xl hover:bg-amber-100/70 border border-transparent hover:border-amber-300 transition-all cursor-pointer group text-left"
+            title="Bấm để đổi tên & avatar tiệm"
+          >
+            <div className="w-6 h-6 rounded-lg bg-[#F26440] text-white flex items-center justify-center font-black text-xs shadow-2xs shrink-0 group-hover:scale-105 transition-transform">
+              {shopAvatar || '🍹'}
             </div>
             <div className="flex items-center gap-1 min-w-0">
-              <span className="font-black text-xs sm:text-sm text-[#3D2619] font-['Comfortaa',sans-serif] truncate">
+              <span className="font-black text-xs sm:text-sm text-[#3D2619] font-['Comfortaa',sans-serif] truncate group-hover:text-[#F26440] transition-colors">
                 {shopName}
               </span>
               <span className="text-[9px] font-bold px-1.5 py-0.2 rounded-full bg-amber-100 text-amber-900 shrink-0">
                 Cấp {currentShopLevel}
               </span>
+              <Edit2 size={10} className="text-stone-400 group-hover:text-[#F26440] shrink-0 ml-0.5 opacity-60 group-hover:opacity-100 transition-opacity" />
             </div>
-          </div>
+          </button>
 
           {/* ALL Game Tool Buttons (Never cut off) */}
           <div className="flex items-center gap-1 shrink-0">
@@ -176,6 +188,12 @@ export const Header: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* Shop Profile Modal */}
+      <ShopProfileModal
+        isOpen={isProfileModalOpen}
+        onClose={() => setIsProfileModalOpen(false)}
+      />
     </header>
   );
 };

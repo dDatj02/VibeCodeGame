@@ -239,8 +239,8 @@ export const CozyShopLobby: React.FC<CozyShopLobbyProps> = ({ onOpenKitchen }) =
         </div>
       </div>
 
-      {/* 3. Middle Interactive Hub (Segmented Panel - No page scroll) */}
-      <div className="flex-1 min-h-0 flex flex-col justify-between bg-white border border-[#F0D5C3] rounded-xl p-2 shadow-2xs overflow-hidden">
+      {/* 3. Middle Interactive Hub (Compact & Organized) */}
+      <div className="bg-white border border-[#F0D5C3] rounded-xl p-2 shadow-2xs">
         {/* Segment Tabs */}
         <div className="shrink-0 flex items-center p-0.5 bg-[#FAF0E6] rounded-lg gap-1 mb-1.5">
           <button
@@ -255,7 +255,7 @@ export const CozyShopLobby: React.FC<CozyShopLobbyProps> = ({ onOpenKitchen }) =
             }`}
           >
             <Sparkles size={12} className={completedQuestsCount > 0 ? 'text-amber-500 animate-spin' : ''} />
-            <span>Nhiệm vụ</span>
+            <span>Nhiệm vụ hôm nay</span>
             {completedQuestsCount > 0 && (
               <span className="w-4 h-4 bg-amber-500 text-white text-[9px] rounded-full flex items-center justify-center">
                 {completedQuestsCount}
@@ -295,27 +295,38 @@ export const CozyShopLobby: React.FC<CozyShopLobbyProps> = ({ onOpenKitchen }) =
         </div>
 
         {/* Panel Content Area */}
-        <div className="flex-1 min-h-0 flex flex-col justify-center overflow-hidden">
+        <div className="flex flex-col justify-start">
           {lobbySubTab === 'quests' && (
-            <div className="flex flex-col justify-around h-full gap-1">
+            <div className="flex flex-col gap-1.5 py-0.5">
               {quests.map((q) => {
                 const isDone = q.currentCount >= q.targetCount;
+                const progressPct = Math.min(100, Math.round((q.currentCount / q.targetCount) * 100));
                 return (
                   <div
                     key={q.id}
-                    className="flex items-center justify-between p-1.5 rounded-lg bg-[#FFF9F2] border border-[#F2DECC]"
+                    className="flex items-center justify-between px-2.5 py-1.5 rounded-lg bg-[#FFF9F2] border border-[#F2DECC] hover:border-[#E8CDB6] transition-all shadow-2xs"
                   >
-                    <div className="min-w-0 flex-1 pr-1">
+                    <div className="min-w-0 flex-1 pr-2">
                       <div className="text-[11px] font-bold text-[#3D2619] truncate">{q.title}</div>
-                      <div className="text-[9px] text-amber-700 font-semibold leading-none mt-0.5">
-                        Thưởng {formatVND(q.rewardCash)} · +{q.rewardXp} XP
+                      <div className="flex items-center gap-2 mt-0.5">
+                        <span className="text-[9.5px] text-amber-700 font-extrabold leading-none">
+                          +{formatVND(q.rewardCash)} · +{q.rewardXp} XP
+                        </span>
+                        {!q.completed && !isDone && (
+                          <div className="w-14 sm:w-16 bg-stone-200 h-1.5 rounded-full overflow-hidden shrink-0">
+                            <div
+                              className="bg-amber-500 h-full rounded-full transition-all duration-300"
+                              style={{ width: `${progressPct}%` }}
+                            />
+                          </div>
+                        )}
                       </div>
                     </div>
 
-                    <div className="shrink-0">
+                    <div className="shrink-0 flex items-center">
                       {q.completed ? (
-                        <span className="text-[9px] font-bold text-emerald-600 bg-emerald-100 px-1.5 py-0.5 rounded-md flex items-center gap-0.5">
-                          <CheckCircle2 size={10} /> Xong
+                        <span className="text-[9px] font-bold text-emerald-700 bg-emerald-100/90 border border-emerald-300 px-2 py-0.5 rounded-md flex items-center gap-0.5">
+                          <CheckCircle2 size={10} /> Đã nhận
                         </span>
                       ) : isDone ? (
                         <button
@@ -326,12 +337,12 @@ export const CozyShopLobby: React.FC<CozyShopLobbyProps> = ({ onOpenKitchen }) =
                             useGameStore.getState().addXp(q.rewardXp);
                             showNotification(`Nhận thưởng ${formatVND(q.rewardCash)} & +${q.rewardXp} XP!`, 'success');
                           }}
-                          className="text-[10px] font-black bg-amber-500 hover:bg-amber-400 text-white px-2 py-0.5 rounded-md shadow-xs active:scale-95 cursor-pointer"
+                          className="text-[10px] font-black bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-white px-2.5 py-1 rounded-md shadow-xs active:scale-95 cursor-pointer ring-1 ring-amber-300 animate-pulse"
                         >
-                          Nhận
+                          Nhận thưởng
                         </button>
                       ) : (
-                        <span className="text-[10px] font-extrabold text-[#9E735B] tabular-nums">
+                        <span className="text-[10px] font-extrabold text-[#8C624D] bg-[#FAF0E6] px-2 py-0.5 rounded-md tabular-nums border border-[#EEDCC8]">
                           {q.currentCount}/{q.targetCount}
                         </span>
                       )}
@@ -343,45 +354,47 @@ export const CozyShopLobby: React.FC<CozyShopLobbyProps> = ({ onOpenKitchen }) =
           )}
 
           {lobbySubTab === 'restock' && (
-            <div className="flex flex-col justify-around h-full">
-              <div className="text-[10px] text-[#8C624D] font-bold mb-1 flex items-center justify-between">
+            <div className="flex flex-col py-1">
+              <div className="text-[10px] text-[#8C624D] font-bold mb-1.5 flex items-center justify-between">
                 <span>Chạm +5 để mua nhanh nguyên liệu trước giờ mở quán:</span>
                 <button
                   onClick={() => setActiveTab('inventory')}
-                  className="text-[#E05338] underline"
+                  className="text-[#E05338] underline hover:text-[#C23315] font-extrabold cursor-pointer"
                 >
                   Kho đầy đủ
                 </button>
               </div>
-              <div className="grid grid-cols-4 gap-1.5">
-                {ingredients.slice(0, 4).map((ing) => (
-                  <div
-                    key={ing.id}
-                    className="p-1 rounded-lg bg-[#FFF9F2] border border-[#F2DECC] flex flex-col items-center text-center"
-                  >
-                    <span className="text-xl leading-none">{ing.icon}</span>
-                    <span className="text-[9px] font-bold text-[#3D2619] truncate max-w-[55px] mt-0.5">
-                      {ing.name.split(' ')[0]}
-                    </span>
-                    <span className="text-[8px] text-[#78513E] tabular-nums">
-                      Tồn: {ing.currentStock}
-                    </span>
-                    <button
-                      onClick={() => handleQuickRestock(ing.id)}
-                      className="mt-1 w-full py-0.5 bg-amber-500 hover:bg-amber-400 text-white font-black text-[9px] rounded shadow-2xs active:scale-95 cursor-pointer flex items-center justify-center gap-0.5"
-                      title={`Nhập 5 ${ing.unit}`}
+              <div className="grid grid-cols-5 gap-1 sm:gap-1.5">
+                {ingredients
+                  .filter((i) => ['avocado', 'mango', 'strawberry', 'banana', 'watermelon'].includes(i.id))
+                  .map((ing) => (
+                    <div
+                      key={ing.id}
+                      className="p-1 rounded-lg bg-[#FFF9F2] border border-[#F2DECC] flex flex-col items-center text-center shadow-2xs"
                     >
-                      <Plus size={9} />
-                      <span>5</span>
-                    </button>
-                  </div>
-                ))}
+                      <span className="text-lg leading-none">{ing.icon}</span>
+                      <span className="text-[8.5px] sm:text-[9px] font-bold text-[#3D2619] truncate max-w-[45px] mt-0.5">
+                        {ing.name.split(' ')[0]}
+                      </span>
+                      <span className="text-[8px] text-[#78513E] tabular-nums font-semibold">
+                        Tồn: {ing.currentStock}
+                      </span>
+                      <button
+                        onClick={() => handleQuickRestock(ing.id)}
+                        className="mt-1 w-full py-0.5 bg-amber-500 hover:bg-amber-400 text-white font-black text-[9px] rounded shadow-2xs active:scale-95 cursor-pointer flex items-center justify-center gap-0.5"
+                        title={`Nhập 5 ${ing.unit}`}
+                      >
+                        <Plus size={9} />
+                        <span>5</span>
+                      </button>
+                    </div>
+                  ))}
               </div>
             </div>
           )}
 
           {lobbySubTab === 'shortcuts' && (
-            <div className="grid grid-cols-3 gap-1.5 h-full items-center">
+            <div className="grid grid-cols-3 gap-2 py-1 items-center">
               {quickTabs.map((tab) => (
                 <button
                   key={tab.id}
@@ -389,12 +402,12 @@ export const CozyShopLobby: React.FC<CozyShopLobbyProps> = ({ onOpenKitchen }) =
                     audioService.playClick();
                     setActiveTab(tab.id);
                   }}
-                  className="bg-[#FFF9F2] hover:bg-[#FFF4E8] border border-[#F0D5C3] p-1.5 rounded-lg flex flex-col items-center justify-center gap-0.5 text-center transition-all active:scale-95 cursor-pointer h-full"
+                  className="bg-[#FFF9F2] hover:bg-[#FFF4E8] border border-[#F0D5C3] p-2 rounded-xl flex flex-col items-center justify-center gap-1 text-center transition-all active:scale-95 cursor-pointer shadow-2xs"
                 >
-                  <div className="w-6 h-6 rounded-full bg-white flex items-center justify-center shadow-2xs">
+                  <div className="w-7 h-7 rounded-full bg-white flex items-center justify-center shadow-2xs border border-[#F2DECC]">
                     {tab.icon}
                   </div>
-                  <span className="text-[10px] font-bold text-[#42281D]">{tab.label}</span>
+                  <span className="text-[10.5px] font-bold text-[#42281D]">{tab.label}</span>
                 </button>
               ))}
             </div>

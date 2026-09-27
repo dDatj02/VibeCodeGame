@@ -5,6 +5,8 @@ import { useRecipeStore } from '../stores/recipeStore';
 import { useShopStore } from '../stores/shopStore';
 import { useReviewStore } from '../stores/reviewStore';
 import { useSocialStore } from '../stores/socialStore';
+import { INITIAL_INGREDIENTS } from '../data/ingredients';
+import { RECIPES } from '../data/recipes';
 
 const SAVE_KEY = 'quan_sinh_to_save_v1';
 
@@ -46,6 +48,8 @@ export interface GameSaveDataV1 {
   game: {
     day: number;
     weather: string;
+    shopName?: string;
+    shopAvatar?: string;
   };
   economy: {
     cash: number;
@@ -96,6 +100,8 @@ export class SaveService {
         game: {
           day: g.day,
           weather: g.weather,
+          shopName: g.shopName,
+          shopAvatar: g.shopAvatar,
         },
         economy: {
           cash: e.cash,
@@ -150,6 +156,8 @@ export class SaveService {
         useGameStore.setState({
           day: data.game.day,
           weather: data.game.weather as any,
+          shopName: data.game.shopName || 'Sinh Tố Nhà Tui',
+          shopAvatar: data.game.shopAvatar || '🍹',
           phase: 'prep',
         });
       }
@@ -163,10 +171,24 @@ export class SaveService {
         });
       }
       if (data.inventory?.ingredients) {
-        useInventoryStore.setState({ ingredients: data.inventory.ingredients as any });
+        const savedIngs = data.inventory.ingredients as any[];
+        const mergedIngs = [...savedIngs];
+        INITIAL_INGREDIENTS.forEach((initial) => {
+          if (!mergedIngs.some((i) => i.id === initial.id)) {
+            mergedIngs.push(initial);
+          }
+        });
+        useInventoryStore.setState({ ingredients: mergedIngs });
       }
       if (data.recipes?.recipes) {
-        useRecipeStore.setState({ recipes: data.recipes.recipes as any });
+        const savedRecs = data.recipes.recipes as any[];
+        const mergedRecs = [...savedRecs];
+        RECIPES.forEach((rec) => {
+          if (!mergedRecs.some((r) => r.id === rec.id)) {
+            mergedRecs.push(rec);
+          }
+        });
+        useRecipeStore.setState({ recipes: mergedRecs });
       }
       if (data.shop) {
         useShopStore.setState({

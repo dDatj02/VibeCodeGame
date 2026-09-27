@@ -5,6 +5,7 @@ import { useRecipeStore } from '../stores/recipeStore';
 import { useCustomerStore } from '../stores/customerStore';
 import { useReviewStore } from '../stores/reviewStore';
 import { useShopStore } from '../stores/shopStore';
+import { useGameStore } from '../stores/gameStore';
 import { OrderSystem } from '../systems/OrderSystem';
 import { LOAN_PRODUCTS } from '../data/loans';
 import { SaveService } from '../services/SaveService';
@@ -142,5 +143,23 @@ describe('Quán Sinh Tố - Core Game Systems', () => {
     expect(customersAfter.length).toBe(1);
     expect(customersAfter[0].id).toBe(c2.id);
     expect(customersAfter[0].remainingPatience).toBe(c2.maxPatience);
+  });
+
+  it('TEST 8: Watermelon ingredient, recipe, and custom shop profile with avatar work properly', () => {
+    const inv = useInventoryStore.getState();
+    const watermelon = inv.ingredients.find((i) => i.id === 'watermelon');
+    expect(watermelon).toBeDefined();
+    expect(watermelon?.icon).toBe('🍉');
+    expect(watermelon?.currentStock).toBeGreaterThan(0);
+
+    const recipes = useRecipeStore.getState().recipes;
+    const watermelonSmoothie = recipes.find((r) => r.id === 'smoothie_watermelon');
+    expect(watermelonSmoothie).toBeDefined();
+    expect(watermelonSmoothie?.icon).toBe('🍉');
+
+    // Test shop profile customization
+    useGameStore.getState().setShopProfile('Tiệm Sinh Tố Dưa Hấu Chill', '🍉');
+    expect(useGameStore.getState().shopName).toBe('Tiệm Sinh Tố Dưa Hấu Chill');
+    expect(useGameStore.getState().shopAvatar).toBe('🍉');
   });
 });

@@ -170,6 +170,7 @@ export const CozyKitchenCounter: React.FC<CozyKitchenCounterProps> = ({ onBackTo
   // Determine cup color from added ingredients
   const getSmoothieColor = () => {
     if (!hasCup) return 'transparent';
+    if (addedIngredients.includes('watermelon')) return '#F87171';
     if (addedIngredients.includes('avocado')) return '#86EFAC';
     if (addedIngredients.includes('strawberry')) return '#F472B6';
     if (addedIngredients.includes('mango')) return '#FBBF24';
@@ -185,6 +186,7 @@ export const CozyKitchenCounter: React.FC<CozyKitchenCounterProps> = ({ onBackTo
       case 'mango': return 'Xoài cát';
       case 'strawberry': return 'Dâu tây';
       case 'banana': return 'Chuối chín';
+      case 'watermelon': return 'Dưa hấu';
       case 'coconut_milk': return 'Cốt dừa';
       case 'whey_protein': return 'Đạm Whey';
       case 'chia_seeds': return 'Hạt chia';
@@ -203,6 +205,7 @@ export const CozyKitchenCounter: React.FC<CozyKitchenCounterProps> = ({ onBackTo
       case 'mango': return '🥭';
       case 'strawberry': return '🍓';
       case 'banana': return '🍌';
+      case 'watermelon': return '🍉';
       case 'coconut_milk': return '🥥';
       case 'whey_protein': return '💪';
       case 'chia_seeds': return '🌱';
@@ -224,6 +227,8 @@ export const CozyKitchenCounter: React.FC<CozyKitchenCounterProps> = ({ onBackTo
         return 'bg-rose-100 border-rose-400 text-rose-900';
       case 'banana':
         return 'bg-yellow-100 border-yellow-400 text-yellow-900';
+      case 'watermelon':
+        return 'bg-red-100 border-red-400 text-red-900';
       case 'coconut_milk':
         return 'bg-sky-100 border-sky-400 text-sky-900';
       case 'whey_protein':
@@ -404,7 +409,7 @@ export const CozyKitchenCounter: React.FC<CozyKitchenCounterProps> = ({ onBackTo
               </div>
             )}
 
-            {/* Checklist of 6 Steps (2 Columns, Dynamic Customization & Vietnamese Fruits) */}
+            {/* Checklist of 5 Ingredient Steps (2 Columns + Full Fruit Bar) */}
             <div className="grid grid-cols-2 gap-x-1.5 sm:gap-x-2 gap-y-1 my-1 text-[10px] sm:text-[11px] font-black">
               {/* Step 1: Cup */}
               <div className={`flex items-center gap-1 min-w-0 ${hasCup ? 'text-emerald-700' : 'text-stone-600'}`}>
@@ -473,18 +478,18 @@ export const CozyKitchenCounter: React.FC<CozyKitchenCounterProps> = ({ onBackTo
                   {sugarStatus === 'violated'
                     ? '4. Lỡ cho đường!'
                     : wantsNoSugar
-                    ? '4. Không đường'
+                    ? '4. 0% đường'
                     : wantsLessSugar
-                    ? '4. Ít đường'
-                    : '4. Đường ngọt'}
+                    ? '4. 50% đường'
+                    : '4. 100% đường'}
                 </span>
               </div>
 
               {/* Step 5: Fruit icon(s) only - vibrant, colorful badges */}
-              <div className={`flex items-center gap-1 min-w-0 ${hasAllFruits ? 'text-emerald-700' : 'text-stone-600'}`}>
+              <div className={`col-span-2 flex items-center gap-1.5 min-w-0 pt-0.5 border-t border-amber-200/60 ${hasAllFruits ? 'text-emerald-700' : 'text-stone-600'}`}>
                 <span className="shrink-0">{hasAllFruits ? '✅' : '⚪'}</span>
-                <span className="shrink-0 font-black">5.</span>
-                <div className="flex items-center gap-1 font-black min-w-0">
+                <span className="shrink-0 font-black">5. Trái cây:</span>
+                <div className="flex items-center gap-1 font-black min-w-0 flex-wrap">
                   {requiredFruits.map((rf, idx) => {
                     const isAdded = addedIngredients.includes(rf.ingredientId);
                     const colorStyle = getFruitColorStyle(rf.ingredientId);
@@ -510,12 +515,6 @@ export const CozyKitchenCounter: React.FC<CozyKitchenCounterProps> = ({ onBackTo
                     );
                   })}
                 </div>
-              </div>
-
-              {/* Step 6: Blender */}
-              <div className={`flex items-center gap-1 min-w-0 ${isBlended ? 'text-emerald-700' : 'text-stone-600'}`}>
-                <span className="shrink-0">{isBlended ? '✅' : '⚪'}</span>
-                <span className="truncate">6. Xay nhuyễn</span>
               </div>
             </div>
 
@@ -771,7 +770,7 @@ export const CozyKitchenCounter: React.FC<CozyKitchenCounterProps> = ({ onBackTo
                 Còn: {ingredients.find((i) => i.id === 'sugar')?.currentStock || 0}
               </span>
             </div>
-            {/* 2 Sugar Buttons: Ít đường vs Đường chuẩn */}
+            {/* 2 Sugar Buttons: 50% (Ít ngọt) vs 100% (Đường chuẩn) */}
             <div className="grid grid-cols-2 gap-1 mt-1">
               <button
                 onClick={() => handleAddIngredient('sugar_less')}
@@ -780,10 +779,11 @@ export const CozyKitchenCounter: React.FC<CozyKitchenCounterProps> = ({ onBackTo
                     ? 'bg-amber-500 text-white border-amber-700 shadow-xs ring-1 ring-amber-300'
                     : 'bg-amber-50 hover:bg-amber-100 text-amber-900 border-amber-300'
                 }`}
-                title="Cho 1/2 muỗng đường (Ít đường)"
+                title="Cho 50% đường (Ít ngọt)"
               >
                 <span>🧂</span>
-                <span>Ít Đường</span>
+                <span className="font-extrabold text-[10px]">50%</span>
+                <span className="text-[7.5px] opacity-80 leading-none">Ít ngọt</span>
               </button>
               <button
                 onClick={() => handleAddIngredient('sugar_regular')}
@@ -792,19 +792,20 @@ export const CozyKitchenCounter: React.FC<CozyKitchenCounterProps> = ({ onBackTo
                     ? 'bg-amber-600 text-white border-amber-800 shadow-xs ring-1 ring-amber-300'
                     : 'bg-amber-100 hover:bg-amber-200 text-amber-950 border-amber-400'
                 }`}
-                title="Cho 1 muỗng đường đầy đủ (Đường chuẩn)"
+                title="Cho 100% đường (Đường chuẩn)"
               >
                 <span>🧂🧂</span>
-                <span>Đường Chuẩn</span>
+                <span className="font-extrabold text-[10px]">100%</span>
+                <span className="text-[7.5px] opacity-80 leading-none">Chuẩn</span>
               </button>
             </div>
           </div>
         </div>
 
-        {/* Tier 2: Fresh Fruit Crates (4 Large, Clear Fruit Buttons) */}
-        <div className="grid grid-cols-4 gap-2">
+        {/* Tier 2: Fresh Fruit Crates (5 Fresh Fruits including Watermelon) */}
+        <div className="grid grid-cols-5 gap-1 sm:gap-2">
           {ingredients
-            .filter((i) => i.id === 'avocado' || i.id === 'mango' || i.id === 'strawberry' || i.id === 'banana')
+            .filter((i) => i.id === 'avocado' || i.id === 'mango' || i.id === 'strawberry' || i.id === 'banana' || i.id === 'watermelon')
             .map((ing) => {
               const hasStock = ing.currentStock > 0;
               const fruitStyles = {
@@ -832,6 +833,12 @@ export const CozyKitchenCounter: React.FC<CozyKitchenCounterProps> = ({ onBackTo
                   badge: 'bg-yellow-700 text-white',
                   label: 'Chuối chín',
                 },
+                watermelon: {
+                  bg: 'bg-[#FFF1F2] hover:bg-[#FFE4E6] border-red-500',
+                  text: 'text-red-950',
+                  badge: 'bg-red-600 text-white',
+                  label: 'Dưa hấu',
+                },
               }[ing.id] || {
                 bg: 'bg-white border-stone-400',
                 text: 'text-stone-900',
@@ -844,18 +851,18 @@ export const CozyKitchenCounter: React.FC<CozyKitchenCounterProps> = ({ onBackTo
                   key={ing.id}
                   onClick={() => handleAddIngredient(ing.id)}
                   disabled={!hasStock}
-                  className={`py-1.5 px-1 rounded-xl border-2 flex flex-col items-center justify-between text-center transition-all select-none cursor-pointer ${
+                  className={`py-1 px-0.5 sm:py-1.5 sm:px-1 rounded-xl border-2 flex flex-col items-center justify-between text-center transition-all select-none cursor-pointer ${
                     hasStock
                       ? `${fruitStyles.bg} shadow-md active:scale-95`
                       : 'bg-stone-800 border-stone-900 opacity-40 cursor-not-allowed'
                   }`}
                   title={`Cho ${ing.name} vào ly`}
                 >
-                  <span className="text-xl leading-none drop-shadow-sm">{ing.icon}</span>
-                  <span className={`text-xs font-black ${fruitStyles.text} truncate max-w-[55px] leading-tight mt-0.5`}>
+                  <span className="text-lg sm:text-xl leading-none drop-shadow-sm">{ing.icon}</span>
+                  <span className={`text-[10px] sm:text-xs font-black ${fruitStyles.text} truncate max-w-[45px] sm:max-w-[55px] leading-tight mt-0.5`}>
                     {fruitStyles.label}
                   </span>
-                  <span className={`text-[10px] font-black ${fruitStyles.badge} px-2 py-0.2 rounded-full tabular-nums leading-none mt-0.5 shadow-2xs`}>
+                  <span className={`text-[9px] sm:text-[10px] font-black ${fruitStyles.badge} px-1.5 sm:px-2 py-0.2 rounded-full tabular-nums leading-none mt-0.5 shadow-2xs`}>
                     {ing.currentStock}
                   </span>
                 </button>
