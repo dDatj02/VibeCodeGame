@@ -57,7 +57,7 @@ export const Header: React.FC = () => {
   };
 
   return (
-    <header className="shrink-0 bg-[#FAF4ED] border-b-2 border-[#EEDCC8] text-[#3D2619] px-2.5 py-1.5 select-none shadow-xs z-30">
+    <header className="shrink-0 bg-[#FAF4ED] border-b-2 border-[#EEDCC8] text-[#3D2619] px-2.5 pb-1.5 pt-[calc(0.375rem+env(safe-area-inset-top,0px))] select-none shadow-xs z-30">
       <div className="max-w-5xl mx-auto flex flex-col gap-1">
         {/* Row 1: Brand & Level on the left, ALL Action Tool Buttons on the right */}
         <div className="flex items-center justify-between w-full gap-1">

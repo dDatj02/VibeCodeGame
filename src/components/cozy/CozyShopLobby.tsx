@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
 import { useGameStore } from '../../stores/gameStore';
 import { useEconomyStore } from '../../stores/economyStore';
-import { useReviewStore } from '../../stores/reviewStore';
 import { useShopStore } from '../../stores/shopStore';
 import { useInventoryStore } from '../../stores/inventoryStore';
 import { formatVND } from '../../utils/format';
 import { audioService } from '../../services/AudioService';
+import { SHOP_LEVELS } from '../../data/upgrades';
 import { 
   Sparkles, 
   Trophy, 
@@ -20,7 +20,8 @@ import {
   Plus,
   HelpCircle,
   ShoppingBag,
-  Zap
+  Zap,
+  Store
 } from 'lucide-react';
 
 interface CozyShopLobbyProps {
@@ -44,6 +45,8 @@ export const CozyShopLobby: React.FC<CozyShopLobbyProps> = ({ onOpenKitchen }) =
 
   const cash = useEconomyStore((state) => state.cash);
   const currentShopLevel = useShopStore((state) => state.currentShopLevel);
+  const cleanliness = useShopStore((state) => state.cleanliness);
+  const cleanShop = useShopStore((state) => state.cleanShop);
   const ingredients = useInventoryStore((state) => state.ingredients);
   const buyIngredient = useInventoryStore((state) => state.buyIngredient);
   const deductCash = useEconomyStore((state) => state.deductCash);
@@ -52,6 +55,8 @@ export const CozyShopLobby: React.FC<CozyShopLobbyProps> = ({ onOpenKitchen }) =
   const [tempName, setTempName] = useState(shopName);
   const [showHowToPlay, setShowHowToPlay] = useState(false);
   const [lobbySubTab, setLobbySubTab] = useState<'quests' | 'restock' | 'shortcuts'>('quests');
+
+  const currentLevelConfig = SHOP_LEVELS.find((cfg) => cfg.level === currentShopLevel) || SHOP_LEVELS[0];
 
   const handleSaveName = () => {
     if (tempName.trim()) {
@@ -62,26 +67,40 @@ export const CozyShopLobby: React.FC<CozyShopLobbyProps> = ({ onOpenKitchen }) =
     }
   };
 
-  const weatherDetails: Record<string, { label: string; desc: string; icon: string }> = {
+  const handleCleanUp = () => {
+    cleanShop();
+    audioService.playCashRegister();
+    showNotification('Đã lau dọn quầy hàng sạch sẽ 100%! ✨', 'success');
+  };
+
+  const weatherDetails: Record<string, { label: string; desc: string; icon: string; bgGradient: string; textCol: string }> = {
     sunny: {
       label: 'Trời nắng đẹp',
-      desc: 'Thời tiết ấm áp lý tưởng, khách dạo phố thích ghé uống nước giải khát.',
+      desc: 'Nắng ấm nhẹ nhàng, khách thích ghé giải khát vỉa hè!',
       icon: '☀️',
+      bgGradient: 'from-amber-500/15 via-orange-400/10 to-amber-100/5',
+      textCol: 'text-amber-800',
     },
     heatwave: {
       label: 'Trời nắng gắt',
-      desc: 'Nắng nóng gay gắt! Khách đông hơn +35%.',
+      desc: 'Thời tiết oi bức cực điểm! Khách đông hơn +35%.',
       icon: '🔥',
+      bgGradient: 'from-orange-500/20 via-red-500/10 to-amber-100/10',
+      textCol: 'text-orange-900',
     },
     rain: {
       label: 'Trời mưa rào',
-      desc: 'Mưa tầm tã vỉa hè hơi ướt (-25% khách vãng lai).',
+      desc: 'Mưa rào vỉa hè, giảm -25% lượng khách vãng lai.',
       icon: '🌧️',
+      bgGradient: 'from-blue-500/15 via-indigo-400/10 to-slate-200/10',
+      textCol: 'text-blue-900',
     },
     storm: {
       label: 'Giông bão lớn',
-      desc: 'Gió giật mạnh, nên chuẩn bị hàng kỹ.',
+      desc: 'Gió giật mạnh, nên mua thêm nguyên liệu dự trữ!',
       icon: '⛈️',
+      bgGradient: 'from-slate-600/20 via-purple-900/15 to-slate-300/10',
+      textCol: 'text-purple-950',
     },
   };
 
@@ -97,7 +116,7 @@ export const CozyShopLobby: React.FC<CozyShopLobbyProps> = ({ onOpenKitchen }) =
   ] as const;
 
   const handleQuickRestock = (ingId: string) => {
-    const ing = ingredients.find(i => i.id === ingId);
+    const ing = ingredients.find((i) => i.id === ingId);
     if (!ing) return;
     const cost = ing.basePrice * 5;
     if (cash < cost) {
@@ -111,278 +130,221 @@ export const CozyShopLobby: React.FC<CozyShopLobbyProps> = ({ onOpenKitchen }) =
     showNotification(`Đã nhập +5 ${ing.unit} ${ing.name}!`, 'success');
   };
 
-  const completedQuestsCount = quests.filter(q => q.currentCount >= q.targetCount && !q.completed).length;
+  const completedQuestsCount = quests.filter((q) => q.currentCount >= q.targetCount && !q.completed).length;
+
+  // Mascot Speech Quotes
+  const getMascotSpeech = () => {
+    if (cleanliness < 50) return 'Quầy hàng hơi bẩn rồi sếp ơi, lau dọn ngay thôi! 🧹';
+    if (weather === 'heatwave') return 'Trời nắng gắt thế này khách sẽ đông xỉu luôn! 🔥';
+    if (weather === 'rain') return 'Trời mưa gió, làm ly sinh tố bơ ấm lòng nè! 🌧️';
+    if (day === 1) return 'Chào mừng sếp mở tiệm sinh tố đầu tiên! 🥑✨';
+    return 'Hôm nay Bơ chọn trái cây tươi ngon sẵn rồi sếp ơi! 🍹';
+  };
 
   return (
-    <div className="flex-1 h-full max-h-full w-full max-w-lg mx-auto flex flex-col justify-between p-2 select-none overflow-hidden bg-[#FBF7F0] text-[#3D2619]">
-      {/* 1. Cozy Shop Facade Banner (Compact & Atmospheric) */}
-      <div className="shrink-0 relative bg-gradient-to-b from-[#F26B50] to-[#E05338] text-white rounded-xl p-2.5 shadow-sm overflow-hidden border border-[#D2442A]">
-        {/* Scalloped Awning Top Bar */}
-        <div className="absolute top-0 left-0 right-0 h-2 bg-white/20 flex justify-between px-1">
-          {Array.from({ length: 16 }).map((_, i) => (
-            <div key={i} className="w-3 h-1.5 bg-white/30 rounded-b-full" />
-          ))}
-        </div>
-
-        {/* Mascot & Shop Info Header */}
-        <div className="flex items-center justify-between mt-0.5 relative z-10">
-          <div className="min-w-0 flex-1">
-            <div className="flex items-center gap-1.5">
-              {isEditingName ? (
-                <div className="flex items-center gap-1 bg-white/95 rounded-lg px-2 py-0.5 text-[#3D2619]">
-                  <input
-                    type="text"
-                    value={tempName}
-                    onChange={(e) => setTempName(e.target.value)}
-                    className="text-xs font-bold w-28 outline-none bg-transparent"
-                    maxLength={20}
-                  />
-                  <button
-                    onClick={handleSaveName}
-                    className="text-[10px] bg-[#E05338] text-white px-1.5 py-0.5 rounded font-bold hover:bg-[#D2442A]"
-                  >
-                    Lưu
-                  </button>
-                </div>
-              ) : (
-                <h1 className="text-sm sm:text-base font-black tracking-tight flex items-center gap-1 drop-shadow-xs font-['Comfortaa',sans-serif] truncate">
-                  <span className="truncate">{shopName}</span>
-                  <button
-                    onClick={() => {
-                      setTempName(shopName);
-                      setIsEditingName(true);
-                      audioService.playClick();
-                    }}
-                    className="p-0.5 hover:bg-white/20 rounded-full transition-colors opacity-80 shrink-0"
-                    title="Đổi tên quán"
-                  >
-                    <Edit3 size={11} />
-                  </button>
-                </h1>
-              )}
+    <div className="flex-1 w-full h-full overflow-y-auto no-scrollbar p-2 sm:p-4 bg-gradient-to-b from-[#FDF8F2] via-[#FAF3EA] to-[#F5EAD9] text-[#3D2619] select-none">
+      <div className="max-w-md md:max-w-4xl lg:max-w-5xl mx-auto flex flex-col md:flex-row gap-3 lg:gap-5 items-stretch justify-center">
+        
+        {/* ========================================================= */}
+        {/* LEFT COLUMN: Storefront Facade & Interactive Street Scene */}
+        {/* ========================================================= */}
+        <div className="flex-1 flex flex-col gap-2.5 bg-[#FFFDF9] border border-[#F0D8C6] rounded-2xl p-3 shadow-md relative overflow-hidden">
+          
+          {/* Festive Scalloped Awning Top Header */}
+          <div className="relative rounded-xl bg-gradient-to-r from-[#F26440] via-[#E8532F] to-[#D83C1A] text-white p-3 shadow-md overflow-hidden border border-[#C23315]">
+            {/* Scalloped Awning Fringe */}
+            <div className="absolute top-0 left-0 right-0 h-2.5 bg-white/20 flex justify-between px-1">
+              {Array.from({ length: 18 }).map((_, i) => (
+                <div key={i} className="w-3.5 h-2 bg-amber-200/40 rounded-b-full shadow-2xs" />
+              ))}
             </div>
 
-            {/* Level & XP Bar */}
-            <div className="flex items-center gap-1.5 mt-1">
-              <span className="text-[10px] font-extrabold px-1.5 py-0.5 bg-black/20 rounded-full text-amber-200 shrink-0">
-                Cấp {currentShopLevel} · Tiệm nhỏ
-              </span>
-              <div className="w-20 bg-black/25 h-1.5 rounded-full overflow-hidden shrink-0">
+            {/* Glowing Festoon String Bulbs */}
+            <div className="absolute top-2 left-2 right-2 flex justify-between px-3 pointer-events-none">
+              {['#FDE047', '#38BDF8', '#4ADE80', '#FB7185', '#FDE047'].map((col, idx) => (
                 <div
-                  className="bg-amber-300 h-full rounded-full transition-all duration-300"
-                  style={{ width: `${Math.min(100, Math.round((xp / maxXp) * 100))}%` }}
+                  key={idx}
+                  className="w-2.5 h-2.5 rounded-full shadow-sm animate-pulse"
+                  style={{ backgroundColor: col, animationDelay: `${idx * 0.3}s` }}
                 />
-              </div>
-              <span className="text-[9px] font-bold text-white/80 tabular-nums">
-                {xp}/{maxXp} XP
-              </span>
+              ))}
             </div>
-          </div>
 
-          {/* Cute Blushing Fruit Mascot */}
-          <div className="flex items-center gap-1.5 shrink-0 pl-2">
-            <div className="text-right">
-              <span className="block text-[9px] font-extrabold px-1.5 py-0.5 rounded-full bg-amber-300 text-[#3D2619] shadow-xs">
-                Bé Bơ 💚
-              </span>
-            </div>
-            <div className="w-10 h-10 bg-white/25 rounded-xl flex items-center justify-center text-2xl shadow-inner border border-white/40">
-              🥑
-            </div>
-          </div>
-        </div>
-
-        {/* Days Step Pills & Leaderboard */}
-        <div className="mt-2 pt-1.5 border-t border-white/20 flex items-center justify-between gap-1">
-          <div className="flex items-center gap-1.5 py-1 overflow-x-auto no-scrollbar">
-            <span className="text-[10px] font-black text-white/90 mr-0.5 shrink-0">Ngày:</span>
-            {Array.from({ length: 8 }).map((_, i) => {
-              const dayNum = i + 1;
-              const isCurrent = dayNum === day;
-              const isPast = dayNum < day;
-              return (
-                <div
-                  key={i}
-                  className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-black shrink-0 transition-all ${
-                    isCurrent
-                      ? 'bg-amber-300 text-[#3D2619] border-2 border-white shadow-sm'
-                      : isPast
-                      ? 'bg-white/40 text-white'
-                      : 'bg-white/20 text-white/70'
-                  }`}
-                >
-                  {dayNum}
-                </div>
-              );
-            })}
-          </div>
-
-          <button
-            onClick={() => {
-              audioService.playClick();
-              showNotification(`Quán của bạn đang đứng TOP 1 khu phố ẩm thực! ⭐`, 'success');
-            }}
-            className="flex items-center gap-0.5 text-[10px] font-bold bg-white/20 hover:bg-white/30 text-white px-2 py-1 rounded-full transition-all active:scale-95 cursor-pointer shrink-0"
-          >
-            <Trophy size={11} className="text-yellow-300" />
-            <span>Xếp hạng</span>
-          </button>
-        </div>
-      </div>
-
-      {/* 2. Today's Weather & Forecast Micro-Strip */}
-      <div className="shrink-0 my-1 bg-[#FFF9F2] border border-[#F2DECC] rounded-lg px-2.5 py-1 shadow-2xs flex items-center justify-between text-xs">
-        <div className="flex items-center gap-1 font-bold text-[#E05338] text-[11px] truncate">
-          <span>{currentWeather.icon}</span>
-          <span>{currentWeather.label}:</span>
-          <span className="text-[#78513E] font-medium truncate text-[10px]">{currentWeather.desc}</span>
-        </div>
-      </div>
-
-      {/* 3. Middle Interactive Hub (Compact & Organized) */}
-      <div className="bg-white border border-[#F0D5C3] rounded-xl p-2 shadow-2xs">
-        {/* Segment Tabs */}
-        <div className="shrink-0 flex items-center p-0.5 bg-[#FAF0E6] rounded-lg gap-1 mb-1.5">
-          <button
-            onClick={() => {
-              audioService.playClick();
-              setLobbySubTab('quests');
-            }}
-            className={`flex-1 py-1 text-[11px] font-extrabold rounded-md flex items-center justify-center gap-1 transition-all ${
-              lobbySubTab === 'quests'
-                ? 'bg-white text-[#E05338] shadow-xs'
-                : 'text-[#8C624D] hover:text-[#3D2619]'
-            }`}
-          >
-            <Sparkles size={12} className={completedQuestsCount > 0 ? 'text-amber-500 animate-spin' : ''} />
-            <span>Nhiệm vụ hôm nay</span>
-            {completedQuestsCount > 0 && (
-              <span className="w-4 h-4 bg-amber-500 text-white text-[9px] rounded-full flex items-center justify-center">
-                {completedQuestsCount}
-              </span>
-            )}
-          </button>
-
-          <button
-            onClick={() => {
-              audioService.playClick();
-              setLobbySubTab('restock');
-            }}
-            className={`flex-1 py-1 text-[11px] font-extrabold rounded-md flex items-center justify-center gap-1 transition-all ${
-              lobbySubTab === 'restock'
-                ? 'bg-white text-[#E05338] shadow-xs'
-                : 'text-[#8C624D] hover:text-[#3D2619]'
-            }`}
-          >
-            <ShoppingBag size={12} />
-            <span>Nhập nhanh</span>
-          </button>
-
-          <button
-            onClick={() => {
-              audioService.playClick();
-              setLobbySubTab('shortcuts');
-            }}
-            className={`flex-1 py-1 text-[11px] font-extrabold rounded-md flex items-center justify-center gap-1 transition-all ${
-              lobbySubTab === 'shortcuts'
-                ? 'bg-white text-[#E05338] shadow-xs'
-                : 'text-[#8C624D] hover:text-[#3D2619]'
-            }`}
-          >
-            <Zap size={12} />
-            <span>Tiện ích</span>
-          </button>
-        </div>
-
-        {/* Panel Content Area */}
-        <div className="flex flex-col justify-start">
-          {lobbySubTab === 'quests' && (
-            <div className="flex flex-col gap-1.5 py-0.5">
-              {quests.map((q) => {
-                const isDone = q.currentCount >= q.targetCount;
-                const progressPct = Math.min(100, Math.round((q.currentCount / q.targetCount) * 100));
-                return (
-                  <div
-                    key={q.id}
-                    className="flex items-center justify-between px-2.5 py-1.5 rounded-lg bg-[#FFF9F2] border border-[#F2DECC] hover:border-[#E8CDB6] transition-all shadow-2xs"
-                  >
-                    <div className="min-w-0 flex-1 pr-2">
-                      <div className="text-[11px] font-bold text-[#3D2619] truncate">{q.title}</div>
-                      <div className="flex items-center gap-2 mt-0.5">
-                        <span className="text-[9.5px] text-amber-700 font-extrabold leading-none">
-                          +{formatVND(q.rewardCash)} · +{q.rewardXp} XP
-                        </span>
-                        {!q.completed && !isDone && (
-                          <div className="w-14 sm:w-16 bg-stone-200 h-1.5 rounded-full overflow-hidden shrink-0">
-                            <div
-                              className="bg-amber-500 h-full rounded-full transition-all duration-300"
-                              style={{ width: `${progressPct}%` }}
-                            />
-                          </div>
-                        )}
-                      </div>
-                    </div>
-
-                    <div className="shrink-0 flex items-center">
-                      {q.completed ? (
-                        <span className="text-[9px] font-bold text-emerald-700 bg-emerald-100/90 border border-emerald-300 px-2 py-0.5 rounded-md flex items-center gap-0.5">
-                          <CheckCircle2 size={10} /> Đã nhận
-                        </span>
-                      ) : isDone ? (
-                        <button
-                          onClick={() => {
-                            audioService.playFanfare();
-                            claimQuest(q.id);
-                            useEconomyStore.getState().addCash(q.rewardCash);
-                            useGameStore.getState().addXp(q.rewardXp);
-                            showNotification(`Nhận thưởng ${formatVND(q.rewardCash)} & +${q.rewardXp} XP!`, 'success');
-                          }}
-                          className="text-[10px] font-black bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-white px-2.5 py-1 rounded-md shadow-xs active:scale-95 cursor-pointer ring-1 ring-amber-300 animate-pulse"
-                        >
-                          Nhận thưởng
-                        </button>
-                      ) : (
-                        <span className="text-[10px] font-extrabold text-[#8C624D] bg-[#FAF0E6] px-2 py-0.5 rounded-md tabular-nums border border-[#EEDCC8]">
-                          {q.currentCount}/{q.targetCount}
-                        </span>
-                      )}
-                    </div>
+            {/* Shop Name & Leaderboard Row */}
+            <div className="mt-2.5 flex items-center justify-between gap-2 relative z-10">
+              <div className="flex items-center gap-1.5 min-w-0 flex-1">
+                <Store size={18} className="text-amber-200 shrink-0" />
+                {isEditingName ? (
+                  <div className="flex items-center gap-1 bg-white/95 rounded-lg px-2 py-0.5 text-[#3D2619] max-w-full">
+                    <input
+                      type="text"
+                      value={tempName}
+                      onChange={(e) => setTempName(e.target.value)}
+                      className="text-xs font-bold w-28 sm:w-36 outline-none bg-transparent"
+                      maxLength={20}
+                    />
+                    <button
+                      onClick={handleSaveName}
+                      className="text-[10px] bg-[#E05338] text-white px-2 py-0.5 rounded font-black hover:bg-[#D2442A] shrink-0"
+                    >
+                      Lưu
+                    </button>
                   </div>
-                );
-              })}
-            </div>
-          )}
-
-          {lobbySubTab === 'restock' && (
-            <div className="flex flex-col py-1">
-              <div className="text-[10px] text-[#8C624D] font-bold mb-1.5 flex items-center justify-between">
-                <span>Chạm +5 để mua nhanh nguyên liệu trước giờ mở quán:</span>
-                <button
-                  onClick={() => setActiveTab('inventory')}
-                  className="text-[#E05338] underline hover:text-[#C23315] font-extrabold cursor-pointer"
-                >
-                  Kho đầy đủ
-                </button>
+                ) : (
+                  <h1 className="text-sm sm:text-base font-black tracking-tight flex items-center gap-1 font-['Comfortaa',sans-serif] truncate">
+                    <span className="truncate">{shopName}</span>
+                    <button
+                      onClick={() => {
+                        setTempName(shopName);
+                        setIsEditingName(true);
+                        audioService.playClick();
+                      }}
+                      className="p-1 hover:bg-white/20 rounded-full transition-colors opacity-80 shrink-0"
+                      title="Đổi tên quán"
+                    >
+                      <Edit3 size={11} />
+                    </button>
+                  </h1>
+                )}
               </div>
-              <div className="grid grid-cols-5 gap-1 sm:gap-1.5">
+
+              {/* Leaderboard Trophy Badge */}
+              <button
+                onClick={() => {
+                  audioService.playClick();
+                  showNotification(`Quán của bạn đang đứng TOP 1 khu phố ẩm thực! ⭐`, 'success');
+                }}
+                className="flex items-center gap-1 text-[10px] sm:text-[10.5px] font-black bg-white/20 hover:bg-white/30 text-white px-2 py-1 sm:px-2.5 sm:py-1.5 rounded-xl transition-all active:scale-95 cursor-pointer shrink-0 border border-white/30 shadow-xs"
+              >
+                <Trophy size={12} className="text-yellow-300" />
+                <span>TOP 1 Khu Phố</span>
+              </button>
+            </div>
+
+            {/* Dedicated Row 2: Level & XP Bar (Full Width, Never Overlaps) */}
+            <div className="flex items-center justify-between gap-2 mt-2 pt-1.5 border-t border-white/15 relative z-10">
+              <span className="text-[10px] font-black px-2 py-0.5 bg-black/25 rounded-full text-amber-200 shrink-0 border border-amber-300/30 truncate max-w-[170px] sm:max-w-none">
+                Cấp {currentShopLevel} · {currentLevelConfig.title}
+              </span>
+              
+              <div className="flex items-center gap-1.5 shrink-0">
+                <div className="w-16 sm:w-24 bg-black/30 h-2 rounded-full overflow-hidden shrink-0 border border-white/20">
+                  <div
+                    className="bg-gradient-to-r from-amber-300 to-amber-400 h-full rounded-full transition-all duration-300"
+                    style={{ width: `${Math.min(100, Math.round((xp / maxXp) * 100))}%` }}
+                  />
+                </div>
+                <span className="text-[9.5px] font-black text-white/90 tabular-nums shrink-0">
+                  {xp}/{maxXp} XP
+                </span>
+              </div>
+            </div>
+
+            {/* Days Tracker Horizontal Strip */}
+            <div className="mt-2.5 pt-2 border-t border-white/20 flex items-center justify-between">
+              <div className="flex items-center gap-1 py-0.5 overflow-x-auto no-scrollbar">
+                <span className="text-[10px] font-black text-white/90 mr-1 shrink-0">Hành trình:</span>
+                {Array.from({ length: 8 }).map((_, i) => {
+                  const dayNum = i + 1;
+                  const isCurrent = dayNum === day;
+                  const isPast = dayNum < day;
+                  return (
+                    <div
+                      key={i}
+                      className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-black shrink-0 transition-all ${
+                        isCurrent
+                          ? 'bg-amber-300 text-[#3D2619] border-2 border-white shadow-md scale-105'
+                          : isPast
+                          ? 'bg-white/40 text-white'
+                          : 'bg-white/20 text-white/60'
+                      }`}
+                    >
+                      {dayNum}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+
+          {/* Interactive Shop Storefront Graphics & Fruit Crates Display */}
+          <div className="relative rounded-2xl bg-gradient-to-b from-[#FFFDF9] via-[#FAF3EA] to-[#F5EAD9] p-3 border border-[#F0D5C3] shadow-inner flex flex-col justify-between min-h-[190px]">
+            {/* Background Ambient Sunlight / Decor */}
+            <div className="absolute top-2 right-2 text-3xl opacity-20 pointer-events-none select-none">
+              🌿 🌴
+            </div>
+
+            {/* Chalkboard Menu Special */}
+            <div className="flex items-center justify-between bg-[#26211E] text-amber-200 px-3 py-1.5 rounded-xl border-2 border-[#5C4538] shadow-sm mb-2">
+              <div className="flex items-center gap-2 min-w-0">
+                <span className="text-sm">📌</span>
+                <span className="text-[11px] font-bold truncate">
+                  Đặc sản hôm nay: <strong className="text-amber-300">Sinh Tố Bơ Dừa Béo</strong> (+15% giá)
+                </span>
+              </div>
+              <span className="text-[9.5px] font-black bg-amber-500/20 text-amber-300 px-2 py-0.5 rounded-full border border-amber-400/30 shrink-0">
+                Bán chạy!
+              </span>
+            </div>
+
+            {/* Mascot "Bé Bơ" & Dialogue Bubble */}
+            <div className="flex items-center gap-3 my-1 bg-amber-50/90 border border-amber-200/80 p-2.5 rounded-2xl shadow-2xs">
+              <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center text-3xl shadow-md shrink-0 border border-white">
+                🥑
+              </div>
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center justify-between mb-0.5">
+                  <span className="text-xs font-black text-[#3D2619] flex items-center gap-1">
+                    <span>Bé Bơ</span>
+                    <span className="text-[9px] bg-emerald-100 text-emerald-800 font-extrabold px-1.5 py-0.2 rounded-full">
+                      Quản lý tiệm
+                    </span>
+                  </span>
+                  {cleanliness < 100 && (
+                    <button
+                      onClick={handleCleanUp}
+                      className="text-[10px] font-black bg-amber-500 hover:bg-amber-600 text-white px-2 py-0.5 rounded-lg shadow-2xs transition-all flex items-center gap-1 active:scale-95 cursor-pointer"
+                    >
+                      <span>🧹</span>
+                      <span>Lau dọn ({cleanliness}%)</span>
+                    </button>
+                  )}
+                </div>
+                <p className="text-[11px] font-bold text-amber-900 leading-snug">
+                  "{getMascotSpeech()}"
+                </p>
+              </div>
+            </div>
+
+            {/* Interactive Fruit Wooden Crates (Quick View Inventory) */}
+            <div className="mt-1 pt-2 border-t border-[#EEDCC8]">
+              <div className="text-[10.5px] font-black text-[#78513E] mb-1.5 flex items-center justify-between">
+                <span className="flex items-center gap-1">
+                  <span>🧺</span>
+                  <span>Kệ Trái Cây Tươi Ngon Của Tiệm</span>
+                </span>
+                <span className="text-[9.5px] text-amber-800 font-bold">Tồn kho live</span>
+              </div>
+
+              <div className="grid grid-cols-5 gap-1.5">
                 {ingredients
                   .filter((i) => ['avocado', 'mango', 'strawberry', 'banana', 'watermelon'].includes(i.id))
                   .map((ing) => (
                     <div
                       key={ing.id}
-                      className="p-1 rounded-lg bg-[#FFF9F2] border border-[#F2DECC] flex flex-col items-center text-center shadow-2xs"
+                      className="p-1.5 rounded-xl bg-white border border-[#F2DECC] flex flex-col items-center text-center shadow-2xs hover:border-amber-400 transition-all"
                     >
-                      <span className="text-lg leading-none">{ing.icon}</span>
-                      <span className="text-[8.5px] sm:text-[9px] font-bold text-[#3D2619] truncate max-w-[45px] mt-0.5">
+                      <span className="text-xl leading-none">{ing.icon}</span>
+                      <span className="text-[9px] font-black text-[#3D2619] truncate w-full mt-0.5">
                         {ing.name.split(' ')[0]}
                       </span>
-                      <span className="text-[8px] text-[#78513E] tabular-nums font-semibold">
-                        Tồn: {ing.currentStock}
+                      <span className="text-[8.5px] font-bold text-emerald-700 tabular-nums">
+                        {ing.currentStock} {ing.unit}
                       </span>
                       <button
                         onClick={() => handleQuickRestock(ing.id)}
-                        className="mt-1 w-full py-0.5 bg-amber-500 hover:bg-amber-400 text-white font-black text-[9px] rounded shadow-2xs active:scale-95 cursor-pointer flex items-center justify-center gap-0.5"
-                        title={`Nhập 5 ${ing.unit}`}
+                        className="mt-1 w-full py-0.5 bg-amber-500 hover:bg-amber-600 text-white font-black text-[9px] rounded-md shadow-2xs active:scale-95 cursor-pointer flex items-center justify-center gap-0.5"
+                        title={`Mua +5 ${ing.unit}`}
                       >
                         <Plus size={9} />
                         <span>5</span>
@@ -391,52 +353,234 @@ export const CozyShopLobby: React.FC<CozyShopLobbyProps> = ({ onOpenKitchen }) =
                   ))}
               </div>
             </div>
-          )}
-
-          {lobbySubTab === 'shortcuts' && (
-            <div className="grid grid-cols-3 gap-2 py-1 items-center">
-              {quickTabs.map((tab) => (
-                <button
-                  key={tab.id}
-                  onClick={() => {
-                    audioService.playClick();
-                    setActiveTab(tab.id);
-                  }}
-                  className="bg-[#FFF9F2] hover:bg-[#FFF4E8] border border-[#F0D5C3] p-2 rounded-xl flex flex-col items-center justify-center gap-1 text-center transition-all active:scale-95 cursor-pointer shadow-2xs"
-                >
-                  <div className="w-7 h-7 rounded-full bg-white flex items-center justify-center shadow-2xs border border-[#F2DECC]">
-                    {tab.icon}
-                  </div>
-                  <span className="text-[10.5px] font-bold text-[#42281D]">{tab.label}</span>
-                </button>
-              ))}
-            </div>
-          )}
+          </div>
         </div>
-      </div>
 
-      {/* 4. Bottom Main Action CTA (Always 100% visible on screen without scrolling) */}
-      <div className="shrink-0 pt-1.5">
-        <button
-          onClick={() => {
-            audioService.playClick();
-            openShopForDay();
-            onOpenKitchen();
-          }}
-          className="w-full py-2.5 bg-gradient-to-r from-[#F26440] via-[#E75434] to-[#D94222] hover:brightness-105 active:scale-98 text-white font-black text-sm sm:text-base rounded-xl shadow-md border border-[#C23315] flex items-center justify-center gap-2 cursor-pointer transition-all"
-        >
-          <span className="text-lg">🍹</span>
-          <span>Vào quầy pha chế · Ngày {day}</span>
-        </button>
+        {/* ========================================================= */}
+        {/* RIGHT COLUMN: Operations, Weather & Interactive Hub */}
+        {/* ========================================================= */}
+        <div className="flex-1 flex flex-col gap-2.5 justify-between">
+          
+          {/* Today's Weather & Customer Traffic Card */}
+          <div className={`rounded-2xl p-3 border border-[#F0D5C3] shadow-xs bg-gradient-to-r ${currentWeather.bgGradient} transition-all`}>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <span className="text-2xl">{currentWeather.icon}</span>
+                <div>
+                  <h3 className={`text-xs sm:text-sm font-black ${currentWeather.textCol} flex items-center gap-1`}>
+                    <span>{currentWeather.label}</span>
+                    <span className="text-[10px] bg-white/80 font-black px-1.5 py-0.2 rounded-full border border-amber-300">
+                      Ngày {day}
+                    </span>
+                  </h3>
+                  <p className="text-[11px] font-bold text-stone-700 mt-0.5 leading-tight">
+                    {currentWeather.desc}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
 
-        <div className="text-center mt-1">
-          <button
-            onClick={() => setShowHowToPlay(!showHowToPlay)}
-            className="text-[11px] text-[#9E735B] hover:text-[#E05338] font-bold underline cursor-pointer inline-flex items-center gap-1"
-          >
-            <HelpCircle size={11} />
-            <span>Cách chơi tiệm sinh tố</span>
-          </button>
+          {/* Interactive Operations Hub */}
+          <div className="bg-[#FFFDF9] border border-[#F0D8C6] rounded-2xl p-3 shadow-md flex-1 flex flex-col justify-between">
+            {/* Sub Tabs Bar */}
+            <div className="flex items-center p-1 bg-[#FAF0E6] rounded-xl gap-1 mb-2 border border-[#EEDCC8]">
+              <button
+                onClick={() => {
+                  audioService.playClick();
+                  setLobbySubTab('quests');
+                }}
+                className={`flex-1 py-1.5 text-xs font-black rounded-lg flex items-center justify-center gap-1 transition-all cursor-pointer ${
+                  lobbySubTab === 'quests'
+                    ? 'bg-white text-[#E05338] shadow-xs'
+                    : 'text-[#8C624D] hover:text-[#3D2619]'
+                }`}
+              >
+                <Sparkles size={13} className={completedQuestsCount > 0 ? 'text-amber-500 animate-spin' : ''} />
+                <span>Nhiệm vụ</span>
+                {completedQuestsCount > 0 && (
+                  <span className="w-4 h-4 bg-amber-500 text-white text-[9px] rounded-full flex items-center justify-center font-bold">
+                    {completedQuestsCount}
+                  </span>
+                )}
+              </button>
+
+              <button
+                onClick={() => {
+                  audioService.playClick();
+                  setLobbySubTab('restock');
+                }}
+                className={`flex-1 py-1.5 text-xs font-black rounded-lg flex items-center justify-center gap-1 transition-all cursor-pointer ${
+                  lobbySubTab === 'restock'
+                    ? 'bg-white text-[#E05338] shadow-xs'
+                    : 'text-[#8C624D] hover:text-[#3D2619]'
+                }`}
+              >
+                <ShoppingBag size={13} />
+                <span>Nhập nhanh</span>
+              </button>
+
+              <button
+                onClick={() => {
+                  audioService.playClick();
+                  setLobbySubTab('shortcuts');
+                }}
+                className={`flex-1 py-1.5 text-xs font-black rounded-lg flex items-center justify-center gap-1 transition-all cursor-pointer ${
+                  lobbySubTab === 'shortcuts'
+                    ? 'bg-white text-[#E05338] shadow-xs'
+                    : 'text-[#8C624D] hover:text-[#3D2619]'
+                }`}
+              >
+                <Zap size={13} />
+                <span>Tiện ích</span>
+              </button>
+            </div>
+
+            {/* Panel Tab Content */}
+            <div className="flex-1 flex flex-col justify-start min-h-[140px]">
+              {lobbySubTab === 'quests' && (
+                <div className="flex flex-col gap-1.5">
+                  {quests.map((q) => {
+                    const isDone = q.currentCount >= q.targetCount;
+                    const progressPct = Math.min(100, Math.round((q.currentCount / q.targetCount) * 100));
+                    return (
+                      <div
+                        key={q.id}
+                        className="flex items-center justify-between p-2 rounded-xl bg-[#FFF9F2] border border-[#F2DECC] hover:border-amber-300 transition-all shadow-2xs"
+                      >
+                        <div className="min-w-0 flex-1 pr-2">
+                          <div className="text-xs font-black text-[#3D2619] truncate">{q.title}</div>
+                          <div className="flex items-center gap-2 mt-1">
+                            <span className="text-[10px] text-amber-800 font-black">
+                              +{formatVND(q.rewardCash)} · +{q.rewardXp} XP
+                            </span>
+                            {!q.completed && !isDone && (
+                              <div className="w-16 bg-stone-200 h-1.5 rounded-full overflow-hidden shrink-0">
+                                <div
+                                  className="bg-amber-500 h-full rounded-full transition-all duration-300"
+                                  style={{ width: `${progressPct}%` }}
+                                />
+                              </div>
+                            )}
+                          </div>
+                        </div>
+
+                        <div className="shrink-0 flex items-center">
+                          {q.completed ? (
+                            <span className="text-[9.5px] font-black text-emerald-700 bg-emerald-100 border border-emerald-300 px-2 py-0.5 rounded-md flex items-center gap-0.5">
+                              <CheckCircle2 size={10} /> Đã nhận
+                            </span>
+                          ) : isDone ? (
+                            <button
+                              onClick={() => {
+                                audioService.playFanfare();
+                                claimQuest(q.id);
+                                useEconomyStore.getState().addCash(q.rewardCash);
+                                useGameStore.getState().addXp(q.rewardXp);
+                                showNotification(`Nhận thưởng ${formatVND(q.rewardCash)} & +${q.rewardXp} XP!`, 'success');
+                              }}
+                              className="text-[10.5px] font-black bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-white px-2.5 py-1 rounded-lg shadow-xs active:scale-95 cursor-pointer ring-1 ring-amber-300 animate-pulse"
+                            >
+                              Nhận thưởng
+                            </button>
+                          ) : (
+                            <span className="text-[10px] font-black text-[#8C624D] bg-[#FAF0E6] px-2 py-0.5 rounded-md tabular-nums border border-[#EEDCC8]">
+                              {q.currentCount}/{q.targetCount}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+
+              {lobbySubTab === 'restock' && (
+                <div className="flex flex-col py-1">
+                  <div className="text-[11px] text-[#8C624D] font-bold mb-2 flex items-center justify-between">
+                    <span>Chạm +5 để mua nhanh nguyên liệu trước giờ mở quán:</span>
+                    <button
+                      onClick={() => setActiveTab('inventory')}
+                      className="text-[#E05338] underline hover:text-[#C23315] font-black cursor-pointer"
+                    >
+                      Kho đầy đủ
+                    </button>
+                  </div>
+                  <div className="grid grid-cols-5 gap-1.5">
+                    {ingredients
+                      .filter((i) => ['avocado', 'mango', 'strawberry', 'banana', 'watermelon'].includes(i.id))
+                      .map((ing) => (
+                        <div
+                          key={ing.id}
+                          className="p-1.5 rounded-xl bg-[#FFF9F2] border border-[#F2DECC] flex flex-col items-center text-center shadow-2xs"
+                        >
+                          <span className="text-xl leading-none">{ing.icon}</span>
+                          <span className="text-[9.5px] font-black text-[#3D2619] truncate w-full mt-0.5">
+                            {ing.name.split(' ')[0]}
+                          </span>
+                          <span className="text-[8.5px] text-[#78513E] tabular-nums font-bold">
+                            Tồn: {ing.currentStock}
+                          </span>
+                          <button
+                            onClick={() => handleQuickRestock(ing.id)}
+                            className="mt-1 w-full py-0.5 bg-amber-500 hover:bg-amber-400 text-white font-black text-[9.5px] rounded-md shadow-2xs active:scale-95 cursor-pointer flex items-center justify-center gap-0.5"
+                          >
+                            <Plus size={9} />
+                            <span>5</span>
+                          </button>
+                        </div>
+                      ))}
+                  </div>
+                </div>
+              )}
+
+              {lobbySubTab === 'shortcuts' && (
+                <div className="grid grid-cols-3 gap-2 py-1 items-center">
+                  {quickTabs.map((tab) => (
+                    <button
+                      key={tab.id}
+                      onClick={() => {
+                        audioService.playClick();
+                        setActiveTab(tab.id);
+                      }}
+                      className="bg-[#FFF9F2] hover:bg-[#FFF4E8] border border-[#F0D5C3] p-2.5 rounded-xl flex flex-col items-center justify-center gap-1.5 text-center transition-all active:scale-95 cursor-pointer shadow-2xs hover:border-amber-400"
+                    >
+                      <div className="w-8 h-8 rounded-full bg-white flex items-center justify-center shadow-2xs border border-[#F2DECC]">
+                        {tab.icon}
+                      </div>
+                      <span className="text-xs font-black text-[#42281D]">{tab.label}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Main Action CTA Button: Start Day & Enter Kitchen */}
+            <div className="mt-3 pt-2 border-t border-[#EEDCC8]">
+              <button
+                onClick={() => {
+                  audioService.playClick();
+                  openShopForDay();
+                  onOpenKitchen();
+                }}
+                className="w-full py-3 bg-gradient-to-r from-[#F26440] via-[#E75434] to-[#D94222] hover:brightness-105 active:scale-98 text-white font-black text-base sm:text-lg rounded-2xl shadow-md border border-[#C23315] flex items-center justify-center gap-2 cursor-pointer transition-all"
+              >
+                <span className="text-xl">🍹</span>
+                <span>Vào quầy pha chế · Ngày {day}</span>
+              </button>
+
+              <div className="text-center mt-1.5">
+                <button
+                  onClick={() => setShowHowToPlay(!showHowToPlay)}
+                  className="text-xs text-[#9E735B] hover:text-[#E05338] font-bold underline cursor-pointer inline-flex items-center gap-1"
+                >
+                  <HelpCircle size={12} />
+                  <span>Cách chơi tiệm sinh tố</span>
+                </button>
+              </div>
+            </div>
+          </div>
+
         </div>
       </div>
 

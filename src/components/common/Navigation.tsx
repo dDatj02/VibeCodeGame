@@ -59,7 +59,7 @@ export const Navigation: React.FC = () => {
   ];
 
   return (
-    <nav className="shrink-0 bg-[#FAF4ED] border-t-2 border-[#EEDCC8] text-[#3D2619] py-1 px-1 z-30 shadow-md w-full overflow-hidden">
+    <nav className="shrink-0 bg-[#FAF4ED] border-t-2 border-[#EEDCC8] text-[#3D2619] pt-1 pb-[calc(0.25rem+env(safe-area-inset-bottom,0px))] px-1 z-30 shadow-md w-full overflow-hidden">
       <div className="flex items-center justify-between w-full max-w-lg mx-auto gap-0.5">
         {tabs.map((tab) => {
           const isActive = activeTab === tab.id;
