@@ -97,7 +97,8 @@ export const useCustomerStore = create<CustomerState>((set, get) => ({
     else if (sugar === 'less_sugar') notes.push('50% đường (ít ngọt)');
     else notes.push('100% đường (chuẩn)');
 
-    if (ice === 'less_ice') notes.push('Ít đá');
+    if (ice === 'less_ice') notes.push('50% đá');
+    else notes.push('100% đá');
 
     if (milk === 'no_milk') notes.push('Không sữa');
 

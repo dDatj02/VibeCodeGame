@@ -93,7 +93,7 @@ export const CozyKitchenCounter: React.FC<CozyKitchenCounterProps> = ({ onBackTo
 
     if (ingId.startsWith('ice')) {
       setAddedIngredients((prev) => [...prev.filter((id) => !id.startsWith('ice')), ingId]);
-      showNotification(ingId === 'ice_less' ? '🧊 Đã chọn lượng: Ít đá!' : '🧊🧊 Đã chọn lượng: Đá chuẩn!', 'info');
+      showNotification(ingId === 'ice_less' ? '🧊 Đã chọn lượng: 50% đá!' : '🧊🧊 Đã chọn lượng: 100% đá!', 'info');
     } else if (ingId.startsWith('sugar')) {
       setAddedIngredients((prev) => [...prev.filter((id) => !id.startsWith('sugar')), ingId]);
       showNotification(ingId === 'sugar_less' ? '🧂 Đã chọn lượng: Ít đường!' : '🧂🧂 Đã chọn lượng: Đường chuẩn!', 'info');
@@ -429,7 +429,7 @@ export const CozyKitchenCounter: React.FC<CozyKitchenCounterProps> = ({ onBackTo
               >
                 <span className="shrink-0">{iceStatus === 'correct' ? '✅' : iceStatus === 'warning' ? '⚠️' : '⚪'}</span>
                 <span className="truncate">
-                  {wantsLessIce ? '2. Ít đá' : '2. Đá chuẩn'}
+                  {wantsLessIce ? '2. 50% đá' : '2. 100% đá'}
                 </span>
               </div>
 
@@ -489,7 +489,7 @@ export const CozyKitchenCounter: React.FC<CozyKitchenCounterProps> = ({ onBackTo
               <div className={`col-span-2 flex items-center gap-1.5 min-w-0 pt-0.5 border-t border-amber-200/60 ${hasAllFruits ? 'text-emerald-700' : 'text-stone-600'}`}>
                 <span className="shrink-0">{hasAllFruits ? '✅' : '⚪'}</span>
                 <span className="shrink-0 font-black">5. Trái cây:</span>
-                <div className="flex items-center gap-1 font-black min-w-0 flex-wrap">
+                <div className="flex items-center gap-1 font-black min-w-0 flex-wrap pr-1">
                   {requiredFruits.map((rf, idx) => {
                     const isAdded = addedIngredients.includes(rf.ingredientId);
                     const colorStyle = getFruitColorStyle(rf.ingredientId);
@@ -506,7 +506,7 @@ export const CozyKitchenCounter: React.FC<CozyKitchenCounterProps> = ({ onBackTo
                         >
                           <span className="leading-none select-none text-sm sm:text-base drop-shadow-2xs">{getIngredientIcon(rf.ingredientId)}</span>
                           {isAdded && (
-                            <span className="absolute -top-1 -right-1 bg-emerald-600 text-white rounded-full w-3 h-3 sm:w-3.5 sm:h-3.5 flex items-center justify-center text-[7px] sm:text-[8px] font-black ring-1 ring-white">
+                            <span className="absolute -top-1 -right-1 bg-emerald-600 text-white rounded-full w-3 h-3 flex items-center justify-center text-[7px] font-black ring-1 ring-white">
                               ✓
                             </span>
                           )}
@@ -700,7 +700,7 @@ export const CozyKitchenCounter: React.FC<CozyKitchenCounterProps> = ({ onBackTo
                 Còn: {ingredients.find((i) => i.id === 'ice')?.currentStock || 0}
               </span>
             </div>
-            {/* 2 Ice Buttons: Ít đá vs Đá chuẩn */}
+            {/* 2 Ice Buttons: 50% đá vs 100% đá */}
             <div className="grid grid-cols-2 gap-1 mt-1">
               <button
                 onClick={() => handleAddIngredient('ice_less')}
@@ -709,10 +709,10 @@ export const CozyKitchenCounter: React.FC<CozyKitchenCounterProps> = ({ onBackTo
                     ? 'bg-sky-500 text-white border-sky-700 shadow-xs ring-1 ring-sky-300'
                     : 'bg-sky-50 hover:bg-sky-100 text-sky-900 border-sky-300'
                 }`}
-                title="Cho 1/2 muỗng đá (Ít đá)"
+                title="Cho 50% đá (1/2 muỗng)"
               >
                 <span>🧊</span>
-                <span>Ít Đá</span>
+                <span>50% Đá</span>
               </button>
               <button
                 onClick={() => handleAddIngredient('ice_regular')}
@@ -721,10 +721,10 @@ export const CozyKitchenCounter: React.FC<CozyKitchenCounterProps> = ({ onBackTo
                     ? 'bg-sky-600 text-white border-sky-800 shadow-xs ring-1 ring-sky-300'
                     : 'bg-sky-100 hover:bg-sky-200 text-sky-950 border-sky-400'
                 }`}
-                title="Cho 1 muỗng đá đầy đủ (Đá chuẩn)"
+                title="Cho 100% đá (1 muỗng chuẩn)"
               >
                 <span>🧊🧊</span>
-                <span>Đá Chuẩn</span>
+                <span>100% Đá</span>
               </button>
             </div>
           </div>

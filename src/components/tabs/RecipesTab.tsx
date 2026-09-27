@@ -73,29 +73,29 @@ export const RecipesTab: React.FC = () => {
             >
               <div>
                 {/* Header */}
-                <div className="flex items-start justify-between">
-                  <div className="flex items-center gap-2.5">
-                    <div className="w-11 h-11 rounded-2xl bg-[#FFF9F2] border border-[#F2DECC] flex items-center justify-center text-2xl shrink-0 shadow-inner">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-2xl bg-[#FFF9F2] border border-[#F2DECC] flex items-center justify-center text-xl sm:text-2xl shrink-0 shadow-inner">
                       {recipe.icon}
                     </div>
-                    <div>
-                      <h3 className="font-extrabold text-xs text-[#3D2619] flex items-center gap-1.5">
-                        <span>{recipe.name}</span>
-                        <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-amber-100 text-amber-900 font-bold">
+                    <div className="min-w-0">
+                      <h3 className="font-extrabold text-xs text-[#3D2619] flex items-center gap-1 flex-wrap">
+                        <span className="truncate">{recipe.name}</span>
+                        <span className="text-[9px] sm:text-[10px] px-1.5 py-0.2 rounded-full bg-amber-100 text-amber-900 font-bold shrink-0">
                           {recipe.tag}
                         </span>
                       </h3>
-                      <p className="text-[11px] text-[#9E735B] mt-0.5 line-clamp-1">
+                      <p className="text-[10.5px] sm:text-[11px] text-[#9E735B] mt-0.5 line-clamp-1">
                         {recipe.description}
                       </p>
                     </div>
                   </div>
 
-                  <div className="text-right">
+                  <div className="text-right shrink-0">
                     <div className="text-xs font-black text-[#E05338] tabular-nums">
                       {formatVND(recipe.currentSellingPrice)}
                     </div>
-                    <span className="text-[10px] text-emerald-700 font-semibold">
+                    <span className="text-[9.5px] text-emerald-700 font-semibold block">
                       Lãi: {formatVND(profit)} ({marginPct}%)
                     </span>
                   </div>
@@ -108,11 +108,11 @@ export const RecipesTab: React.FC = () => {
                     return (
                       <span
                         key={req.ingredientId}
-                        className="text-[10px] px-2 py-0.5 rounded-full bg-[#FFF9F2] border border-[#F2DECC] text-[#78513E] flex items-center gap-0.5 font-bold"
+                        className="text-[9.5px] sm:text-[10px] px-1.5 sm:px-2 py-0.5 rounded-full bg-[#FFF9F2] border border-[#F2DECC] text-[#78513E] flex items-center gap-0.5 font-bold shrink-0"
                       >
-                        <span>{ing?.icon || '📦'}</span>
-                        <span>{ing?.name.split(' ')[0] || req.ingredientId}</span>
-                        <span className="text-[#9E735B]">x{req.amount}</span>
+                        <span className="shrink-0">{ing?.icon || '📦'}</span>
+                        <span className="truncate">{ing?.name.split(' ')[0] || req.ingredientId}</span>
+                        <span className="text-[#9E735B] shrink-0">x{req.amount}</span>
                       </span>
                     );
                   })}
