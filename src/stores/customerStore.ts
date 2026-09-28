@@ -14,6 +14,8 @@ interface CustomerState {
   tickPatience: (deltaSeconds: number) => { expiredCustomers: ActiveCustomer[] };
   serveCustomer: (customerId: string) => ActiveCustomer | undefined;
   removeCustomer: (customerId: string) => void;
+  changeCustomerRecipe: (customerId: string, newRecipeId: RecipeId) => boolean;
+  customerLeaveOutOfStock: (customerId: string) => ActiveCustomer | undefined;
   recordSale: (revenue: number, ingredientCost: number) => void;
   resetDailyCustomerMetrics: () => void;
   clearQueue: () => void;
@@ -209,6 +211,52 @@ export const useCustomerStore = create<CustomerState>((set, get) => ({
           };
         }),
     }));
+  },
+
+  changeCustomerRecipe: (customerId: string, newRecipeId: RecipeId) => {
+    const { activeCustomers } = get();
+    const customer = activeCustomers.find((c) => c.id === customerId);
+    if (!customer) return false;
+
+    set((state) => ({
+      activeCustomers: state.activeCustomers.map((c) => {
+        if (c.id === customerId) {
+          return {
+            ...c,
+            desiredRecipeId: newRecipeId,
+            remainingPatience: c.maxPatience, // Full patience reset!
+          };
+        }
+        return c;
+      }),
+    }));
+    return true;
+  },
+
+  customerLeaveOutOfStock: (customerId: string) => {
+    const { activeCustomers } = get();
+    const customer = activeCustomers.find((c) => c.id === customerId);
+    if (!customer) return undefined;
+
+    // Polite departure: remove from queue and record as lost without 1-star rage
+    const remaining = activeCustomers
+      .filter((c) => c.id !== customerId)
+      .map((c, idx) => {
+        const isNowAtCounter = idx === 0;
+        const wasInQueue = c.queuePosition > 1;
+        return {
+          ...c,
+          queuePosition: idx + 1,
+          remainingPatience: isNowAtCounter && wasInQueue ? c.maxPatience : c.remainingPatience,
+        };
+      });
+
+    set((state) => ({
+      activeCustomers: remaining,
+      customersLostToday: state.customersLostToday + 1,
+    }));
+
+    return customer;
   },
 
   recordSale: (revenue: number, ingredientCost: number) => {

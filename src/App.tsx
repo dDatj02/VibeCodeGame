@@ -35,6 +35,35 @@ export const App: React.FC = () => {
   // Initialize saved progress on startup
   useEffect(() => {
     SaveService.loadGame();
+
+    // Auto-save on window blur, page hide, beforeunload or visibility change
+    const handleAutoSave = () => {
+      SaveService.saveGame();
+    };
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'hidden') {
+        SaveService.saveGame();
+      }
+    };
+
+    window.addEventListener('beforeunload', handleAutoSave);
+    window.addEventListener('pagehide', handleAutoSave);
+    window.addEventListener('blur', handleAutoSave);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    // Periodic background auto-save every 20 seconds
+    const interval = setInterval(() => {
+      SaveService.saveGame();
+    }, 20000);
+
+    return () => {
+      window.removeEventListener('beforeunload', handleAutoSave);
+      window.removeEventListener('pagehide', handleAutoSave);
+      window.removeEventListener('blur', handleAutoSave);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      clearInterval(interval);
+    };
   }, []);
 
   // Main Simulation Loop

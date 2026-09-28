@@ -32,8 +32,20 @@ class UpdateServiceClass {
   private latestRemoteVersion: string = CURRENT_APP_VERSION;
 
   constructor() {
-    if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
-      this.initServiceWorkerListener();
+    if (typeof window !== 'undefined') {
+      if ('serviceWorker' in navigator) {
+        this.initServiceWorkerListener();
+      }
+
+      // Check on startup after 1.5 seconds
+      setTimeout(() => {
+        this.checkForUpdates();
+      }, 1500);
+
+      // Periodic check every 60 seconds
+      setInterval(() => {
+        this.checkForUpdates();
+      }, 60000);
     }
   }
 

@@ -140,10 +140,27 @@ export const Header: React.FC = () => {
             </div>
           </div>
 
-          {/* Clock & Day */}
-          <div className="flex items-center gap-1 px-2 py-0.5 bg-white rounded-full border border-[#EEDCC8] shadow-2xs text-[#3D2619] tabular-nums font-bold text-[10px]">
-            <span>🕒</span>
-            <span>Ngày {day} · {formatGameTime(timeMinutes)}</span>
+          {/* Clock & Day / Open Shop button */}
+          <div className="flex items-center gap-1">
+            {phase === 'prep' ? (
+              <button
+                onClick={() => {
+                  audioService.playCashRegister();
+                  useGameStore.getState().openShopForDay();
+                  useGameStore.getState().showNotification(`🚀 Đã mở cửa tiệm Ngày ${day}! Bắt đầu đón khách.`, 'success');
+                }}
+                className="px-2.5 py-0.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-black text-[10.5px] rounded-full shadow-xs active:scale-95 transition-all flex items-center gap-1 cursor-pointer border border-emerald-400 animate-pulse"
+                title="Bấm để mở cửa hàng và bắt đầu đón khách"
+              >
+                <span>🚪</span>
+                <span>Mở Cửa Ngày {day}</span>
+              </button>
+            ) : (
+              <div className="flex items-center gap-1 px-2 py-0.5 bg-white rounded-full border border-[#EEDCC8] shadow-2xs text-[#3D2619] tabular-nums font-bold text-[10px]">
+                <span>🕒</span>
+                <span>Ngày {day} · {formatGameTime(timeMinutes)}</span>
+              </div>
+            )}
           </div>
         </div>
       </div>

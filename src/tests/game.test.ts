@@ -176,4 +176,64 @@ describe('Quán Sinh Tố - Core Game Systems', () => {
     const reviews = useReviewStore.getState().reviews;
     expect(reviews[0].rating).toBe(1);
   });
+
+  it('TEST 10: Change customer recipe resets patience and updates desired recipe', () => {
+    const custStore = useCustomerStore.getState();
+    const customer = custStore.spawnCustomer(['smoothie_mango'], 5)!;
+    expect(customer).toBeDefined();
+    expect(customer.desiredRecipeId).toBe('smoothie_mango');
+
+    // Customer changes recipe to avocado smoothie
+    const ok = custStore.changeCustomerRecipe(customer.id, 'smoothie_avocado');
+    expect(ok).toBe(true);
+
+    const updated = useCustomerStore.getState().activeCustomers.find((c) => c.id === customer.id);
+    expect(updated?.desiredRecipeId).toBe('smoothie_avocado');
+    expect(updated?.remainingPatience).toBe(customer.maxPatience);
+  });
+
+  it('TEST 11: Out of stock polite departure removes customer without 1-star penalty review', () => {
+    const custStore = useCustomerStore.getState();
+    const initialReviews = useReviewStore.getState().reviews.length;
+    const customer = custStore.spawnCustomer(['smoothie_mango'], 5)!;
+    expect(customer).toBeDefined();
+
+    // Player informs customer out of stock
+    const left = custStore.customerLeaveOutOfStock(customer.id);
+    expect(left).toBeDefined();
+    expect(useCustomerStore.getState().activeCustomers.length).toBe(0);
+    expect(useCustomerStore.getState().customersLostToday).toBe(1);
+
+    // No angry review was published
+    expect(useReviewStore.getState().reviews.length).toBe(initialReviews);
+  });
+
+  it('TEST 12: nextDay saves game state immediately so reopening app preserves new day number', () => {
+    useGameStore.setState({ day: 2 });
+    SaveService.saveGame();
+
+    // Advance to Day 3
+    useGameStore.getState().nextDay();
+    expect(useGameStore.getState().day).toBe(3);
+    expect(useGameStore.getState().phase).toBe('prep');
+
+    // Simulate closing app and reloading from localStorage
+    SaveService.loadGame();
+    expect(useGameStore.getState().day).toBe(3);
+    expect(useGameStore.getState().phase).toBe('prep');
+  });
+
+  it('TEST 13: New day starts in prep phase (time paused) and only runs after opening shop', () => {
+    useGameStore.setState({ day: 1, phase: 'open', timeMinutes: 1200 });
+    
+    // Day ends and user clicks nextDay
+    useGameStore.getState().nextDay();
+    expect(useGameStore.getState().day).toBe(2);
+    expect(useGameStore.getState().phase).toBe('prep');
+    expect(useGameStore.getState().timeMinutes).toBe(480);
+
+    // Player explicitly opens shop for the day
+    useGameStore.getState().openShopForDay();
+    expect(useGameStore.getState().phase).toBe('open');
+  });
 });

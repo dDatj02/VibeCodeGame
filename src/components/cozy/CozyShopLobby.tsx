@@ -33,6 +33,7 @@ interface CozyShopLobbyProps {
 export const CozyShopLobby: React.FC<CozyShopLobbyProps> = ({ onOpenKitchen }) => {
   const { 
     day, 
+    phase,
     weather, 
     shopName, 
     setShopName, 
@@ -631,17 +632,42 @@ export const CozyShopLobby: React.FC<CozyShopLobbyProps> = ({ onOpenKitchen }) =
 
             {/* Main Action CTA Button: Start Day & Enter Kitchen */}
             <div className="mt-3 pt-2 border-t border-[#EEDCC8]">
-              <button
-                onClick={() => {
-                  audioService.playClick();
-                  openShopForDay();
-                  onOpenKitchen();
-                }}
-                className="w-full py-3 bg-gradient-to-r from-[#F26440] via-[#E75434] to-[#D94222] hover:brightness-105 active:scale-98 text-white font-black text-base sm:text-lg rounded-2xl shadow-md border border-[#C23315] flex items-center justify-center gap-2 cursor-pointer transition-all"
-              >
-                <span className="text-xl">🍹</span>
-                <span>Vào quầy pha chế · Ngày {day}</span>
-              </button>
+              {phase === 'prep' ? (
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between px-1 text-[11px] font-bold text-amber-900">
+                    <span className="flex items-center gap-1">
+                      <span>🕒</span>
+                      <span>Giai đoạn chuẩn bị (Đang dừng giờ)</span>
+                    </span>
+                    <span className="text-emerald-700 font-extrabold bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-300">
+                      Sẵn sàng mở
+                    </span>
+                  </div>
+                  <button
+                    onClick={() => {
+                      audioService.playCashRegister();
+                      openShopForDay();
+                      onOpenKitchen();
+                      showNotification(`🚀 Đã mở cửa tiệm Ngày ${day}! Chúc quán buôn may bán đắt!`, 'success');
+                    }}
+                    className="w-full py-3.5 bg-gradient-to-r from-emerald-600 via-emerald-500 to-teal-600 hover:brightness-105 active:scale-98 text-white font-black text-base sm:text-lg rounded-2xl shadow-lg border-2 border-emerald-400 flex items-center justify-center gap-2 cursor-pointer transition-all animate-pulse"
+                  >
+                    <span className="text-xl">🚪</span>
+                    <span>MỞ CỬA BÁN HÀNG · NGÀY {day}</span>
+                  </button>
+                </div>
+              ) : (
+                <button
+                  onClick={() => {
+                    audioService.playClick();
+                    onOpenKitchen();
+                  }}
+                  className="w-full py-3 bg-gradient-to-r from-[#F26440] via-[#E75434] to-[#D94222] hover:brightness-105 active:scale-98 text-white font-black text-base sm:text-lg rounded-2xl shadow-md border border-[#C23315] flex items-center justify-center gap-2 cursor-pointer transition-all"
+                >
+                  <span className="text-xl">🍹</span>
+                  <span>Vào quầy pha chế (Đang mở cửa)</span>
+                </button>
+              )}
 
               <div className="text-center mt-1.5">
                 <button

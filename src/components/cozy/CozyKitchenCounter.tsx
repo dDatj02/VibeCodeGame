@@ -11,6 +11,7 @@ import { audioService } from '../../services/AudioService';
 import { CUSTOMER_ARCHETYPES } from '../../data/customers';
 import { CozyCustomerCharacter } from './CozyCustomerCharacter';
 import { LargeOrderBanner } from '../largeOrders/LargeOrderBanner';
+import { ChangeRecipeModal } from './ChangeRecipeModal';
 import { IngredientRequirement } from '../../types';
 import { 
   ArrowLeft, 
@@ -18,7 +19,9 @@ import {
   Clock, 
   Zap, 
   Users,
-  RotateCcw
+  RotateCcw,
+  RefreshCw,
+  AlertCircle
 } from 'lucide-react';
 
 interface CozyKitchenCounterProps {
@@ -44,12 +47,21 @@ export const CozyKitchenCounter: React.FC<CozyKitchenCounterProps> = ({ onBackTo
   const [blendProgress, setBlendProgress] = useState(0);
   const [isBlended, setIsBlended] = useState(false);
   const [fridgeOpen, setFridgeOpen] = useState(false);
+  const [isChangeRecipeOpen, setIsChangeRecipeOpen] = useState(false);
 
   // Fallback to first customer if index out of bounds
   const currentIdx = selectedCustomerIndex < activeCustomers.length ? selectedCustomerIndex : 0;
   const selectedCustomer = activeCustomers[currentIdx] || null;
   const desiredRecipe = selectedCustomer ? recipes.find((r) => r.id === selectedCustomer.desiredRecipeId) : null;
   const customerArchetype = selectedCustomer ? CUSTOMER_ARCHETYPES.find((a) => a.id === selectedCustomer.archetypeId) : null;
+
+  // Check if current desired recipe has enough ingredients in stock
+  const isDesiredRecipeMakeable = desiredRecipe
+    ? desiredRecipe.ingredients.every((req) => {
+        const item = ingredients.find((i) => i.id === req.ingredientId);
+        return item && item.currentStock >= req.amount;
+      })
+    : true;
 
   // Cup count in inventory
   const cupItem = ingredients.find((i) => i.id === 'cup');
@@ -447,16 +459,49 @@ export const CozyKitchenCounter: React.FC<CozyKitchenCounterProps> = ({ onBackTo
                   {desiredRecipe.name}
                 </span>
               </div>
-              <span className="bg-amber-600 text-white text-[9.5px] sm:text-[10px] font-black px-1.5 py-0.5 rounded tabular-nums shrink-0 ml-1">
-                {formatVND(desiredRecipe.currentSellingPrice)}
-              </span>
+              <div className="flex items-center gap-1 shrink-0 ml-1">
+                <span className="bg-amber-600 text-white text-[9.5px] sm:text-[10px] font-black px-1.5 py-0.5 rounded tabular-nums">
+                  {formatVND(desiredRecipe.currentSellingPrice)}
+                </span>
+                <button
+                  onClick={() => setIsChangeRecipeOpen(true)}
+                  className="bg-amber-800 hover:bg-amber-700 text-amber-100 p-1 rounded hover:text-white transition-colors cursor-pointer"
+                  title="Gợi ý đổi món hoặc báo hết hàng"
+                >
+                  <RefreshCw size={11} />
+                </button>
+              </div>
             </div>
+
+            {/* Out of Stock Warning Strip if missing ingredients */}
+            {!isDesiredRecipeMakeable && (
+              <div className="mt-1 p-1 px-1.5 bg-rose-50 border border-rose-300 rounded-lg flex items-center justify-between gap-1 text-[9.5px] text-rose-950 font-bold animate-pulse">
+                <span className="flex items-center gap-1 truncate text-rose-700">
+                  <AlertCircle size={12} className="shrink-0 text-rose-600" />
+                  <span className="truncate">Hết nguyên liệu làm món này!</span>
+                </span>
+                <button
+                  onClick={() => setIsChangeRecipeOpen(true)}
+                  className="px-2 py-0.5 bg-[#E05338] hover:bg-[#C23315] text-white rounded font-black text-[9px] cursor-pointer shadow-2xs active:scale-95 shrink-0"
+                >
+                  Đổi món / Báo hết
+                </button>
+              </div>
+            )}
 
             {/* Special Request Dialogue / Note */}
             {selectedCustomer.customNote && (
-              <div className="mt-1 px-2 py-0.5 rounded-md bg-amber-100/90 border border-amber-300 text-[9px] sm:text-[9.5px] font-black text-amber-950 flex items-center gap-1 min-w-0 shadow-2xs">
-                <span className="shrink-0">💬</span>
-                <span className="truncate">{selectedCustomer.customNote}</span>
+              <div className="mt-1 px-2 py-0.5 rounded-md bg-amber-100/90 border border-amber-300 text-[9px] sm:text-[9.5px] font-black text-amber-950 flex items-center justify-between gap-1 min-w-0 shadow-2xs">
+                <div className="flex items-center gap-1 min-w-0 truncate">
+                  <span className="shrink-0">💬</span>
+                  <span className="truncate">{selectedCustomer.customNote}</span>
+                </div>
+                <button
+                  onClick={() => setIsChangeRecipeOpen(true)}
+                  className="text-[8.5px] text-amber-900 font-extrabold underline hover:text-[#E05338] shrink-0 cursor-pointer"
+                >
+                  Đổi món
+                </button>
               </div>
             )}
 
@@ -939,6 +984,20 @@ export const CozyKitchenCounter: React.FC<CozyKitchenCounterProps> = ({ onBackTo
             })}
         </div>
       </div>
+
+      {/* Change Recipe / Out of stock Modal */}
+      <ChangeRecipeModal
+        customer={selectedCustomer}
+        isOpen={isChangeRecipeOpen}
+        onClose={() => setIsChangeRecipeOpen(false)}
+        onRecipeChanged={() => {
+          setHasCup(false);
+          setAddedIngredients([]);
+          setIsBlending(false);
+          setIsBlended(false);
+          setBlendProgress(0);
+        }}
+      />
     </div>
   );
 };

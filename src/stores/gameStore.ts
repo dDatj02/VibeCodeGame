@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { WeatherType, DailyReport, DailyQuest } from '../types';
 import { EventDefinition } from '../data/events';
 import { useCustomerStore } from './customerStore';
+import { SaveService } from '../services/SaveService';
 
 export type ShopDayPhase = 'prep' | 'open' | 'day_ended';
 export type NavigationTab = 'shop' | 'inventory' | 'recipes' | 'finance' | 'reviews' | 'social' | 'upgrades';
@@ -199,11 +200,14 @@ export const useGameStore = create<GameState>((set, get) => ({
     set({
       day: nextDayNum,
       timeMinutes: START_TIME,
-      phase: 'open',
+      phase: 'prep',
       weather: randomWeather,
       activeDailyReport: null,
       isPaused: false,
     });
+
+    // Auto-save new day state immediately to prevent rollback if user closes app
+    SaveService.saveGame();
   },
 
   triggerEvent: (event) => set({ currentEvent: event, isPaused: true }),
