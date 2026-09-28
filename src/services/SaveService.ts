@@ -311,7 +311,11 @@ export class SaveService {
    */
   public static loadGame(): boolean {
     try {
-      const raw = getStorageItem(SAVE_KEY);
+      let raw = getStorageItem(SAVE_KEY);
+      if (!raw) {
+        // Fallback to safety backup if primary save key was not found
+        raw = getStorageItem(SAFETY_BACKUP_KEY);
+      }
       if (!raw) return false;
 
       const data = JSON.parse(raw) as GameSaveDataV1;

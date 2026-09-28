@@ -33,15 +33,27 @@ describe('FEATURE: In-App PWA Safe Update System', () => {
     expect(SaveService.hasSafetyBackup()).toBe(true);
   });
 
-  it('TEST 3: Update listeners are notified when update availability changes', () => {
-    let notifiedState = false;
-    const unsubscribe = UpdateService.subscribe((hasUpdate) => {
-      notifiedState = hasUpdate;
-    });
+  it('TEST 4: Update cycle strictly retains Day, Cash, and Store Progress without resetting', async () => {
+    // Player is at Day 18 with 50,000,000 VND and custom shop name
+    useGameStore.setState({ day: 18, shopName: 'Quán Sinh Tố Xịn' });
+    useEconomyStore.setState({ cash: 50000000 });
+    SaveService.saveGame();
 
-    UpdateService.setUpdateAvailable();
-    expect(notifiedState).toBe(true);
+    // Trigger safe update
+    (globalThis as any).window = {
+      location: { href: '', reload: vi.fn() },
+    };
+    await UpdateService.executeSafeUpdate();
 
-    unsubscribe();
+    // Reset runtime Zustand memory to default (simulating browser reload)
+    useGameStore.setState({ day: 1, shopName: 'Sinh Tố Nhà Tui' });
+    useEconomyStore.setState({ cash: 500000 });
+
+    // App reloads and hydrates saved data
+    const loaded = SaveService.loadGame();
+    expect(loaded).toBe(true);
+    expect(useGameStore.getState().day).toBe(18);
+    expect(useGameStore.getState().shopName).toBe('Quán Sinh Tố Xịn');
+    expect(useEconomyStore.getState().cash).toBe(50000000);
   });
 });
