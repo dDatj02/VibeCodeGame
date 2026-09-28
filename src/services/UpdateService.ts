@@ -1,6 +1,6 @@
 import { SaveService } from './SaveService';
 
-export const CURRENT_APP_VERSION = 'v1.3.0';
+export const CURRENT_APP_VERSION = 'v1.4.0';
 export const APP_BUILD_DATE = '2026-09-28';
 
 export interface AppReleaseInfo {
@@ -13,12 +13,12 @@ export interface AppReleaseInfo {
 export const CURRENT_RELEASE_INFO: AppReleaseInfo = {
   version: CURRENT_APP_VERSION,
   releaseDate: 'Hôm nay',
-  title: 'Bản Cập Nhật Sàn Giao Dịch Vàng 9999 & Tối Ưu Tiến Trình',
+  title: 'Bản Cập Nhật v1.4.0 - Tự Do Phản Hồi Đánh Giá & Thị Trường Vàng 9999',
   features: [
-    '🪙 Sàn Vàng 9999: Mua, nắm giữ và bán chốt lời theo giá thị trường biến động hàng ngày.',
-    '💼 Tích hợp danh mục tài sản ròng (Net Worth) kết hợp Tiền mặt, Bất động sản và Vàng.',
-    '⚡ Tinh gọn thanh công cụ trên cùng với Trung Tâm Cài Đặt (Settings) tập trung.',
-    '🛡️ Bảo toàn 100% dữ liệu tiến trình chơi, tự động sao lưu an toàn khi nạp bản cập nhật.',
+    '✍️ Tự do gõ phản hồi đánh giá khách hàng bằng tiếng Việt tự nhiên.',
+    '⭐ Hệ thống cảnh báo & kiểm duyệt MapReview thông minh, bảo toàn 100% đánh giá cũ.',
+    '🪙 Sàn Giao Dịch Vàng 9999 biến động hàng ngày & Danh mục Tài Sản Ròng Net Worth.',
+    '⚡ Trung tâm Cài Đặt tập trung, hỗ trợ làm mới xóa cache chống kẹt bản cũ.',
   ],
 };
 
@@ -29,6 +29,7 @@ class UpdateServiceClass {
   private isUpdateAvailable = false;
   private pendingUpdateFn: (() => void) | null = null;
   private registration: ServiceWorkerRegistration | null = null;
+  private latestRemoteVersion: string = CURRENT_APP_VERSION;
 
   constructor() {
     if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
@@ -46,9 +47,12 @@ class UpdateServiceClass {
     };
   }
 
-  public setUpdateAvailable(updateFn?: () => void) {
+  public setUpdateAvailable(updateFn?: () => void, newVer?: string) {
     this.isUpdateAvailable = true;
     this.pendingUpdateFn = updateFn || null;
+    if (newVer) {
+      this.latestRemoteVersion = newVer;
+    }
     this.notifyAll();
   }
 
@@ -107,16 +111,31 @@ class UpdateServiceClass {
    * Manually checks if a new version is available from server / service worker.
    */
   public async checkForUpdates(): Promise<boolean> {
-    if (!('serviceWorker' in navigator)) return false;
-
     try {
-      if (this.registration) {
+      // 1. Check Service Worker update
+      if ('serviceWorker' in navigator && this.registration) {
         await this.registration.update();
         if (this.registration.waiting) {
           this.setUpdateAvailable(() => {
             this.registration?.waiting?.postMessage({ type: 'SKIP_WAITING' });
           });
           return true;
+        }
+      }
+
+      // 2. Fetch remote version.json to bypass caching
+      if (typeof window !== 'undefined') {
+        const res = await fetch(`/version.json?_t=${Date.now()}`, {
+          cache: 'no-store',
+          headers: { 'Cache-Control': 'no-cache', 'Pragma': 'no-cache' },
+        });
+
+        if (res.ok) {
+          const data = await res.json();
+          if (data && data.version && data.version !== CURRENT_APP_VERSION) {
+            this.setUpdateAvailable(undefined, data.version);
+            return true;
+          }
         }
       }
     } catch (err) {
@@ -129,8 +148,9 @@ class UpdateServiceClass {
    * Executes a safe update:
    * 1. Creates a safety rollback snapshot in storage.
    * 2. Saves current live Zustand game state.
-   * 3. Activates the waiting service worker.
-   * 4. Reloads the application.
+   * 3. Purges Service Worker cache storages.
+   * 4. Activates the waiting service worker.
+   * 5. Hard reloads the application.
    */
   public async executeSafeUpdate(onProgress?: (step: string) => void): Promise<void> {
     try {
@@ -141,8 +161,18 @@ class UpdateServiceClass {
       // 2. Live save
       SaveService.saveGame();
 
+      onProgress?.('Đang xóa bộ nhớ đệm cũ (Cache Storage)...');
+      if (typeof window !== 'undefined' && 'caches' in window) {
+        try {
+          const cacheKeys = await window.caches.keys();
+          await Promise.all(cacheKeys.map((key) => window.caches.delete(key)));
+        } catch (e) {
+          console.warn('Could not clear caches:', e);
+        }
+      }
+
       onProgress?.('Đang kích hoạt phiên bản mới...');
-      await new Promise((resolve) => setTimeout(resolve, 400));
+      await new Promise((resolve) => setTimeout(resolve, 300));
 
       if (this.pendingUpdateFn) {
         this.pendingUpdateFn();
@@ -150,20 +180,30 @@ class UpdateServiceClass {
         this.registration.waiting.postMessage({ type: 'SKIP_WAITING' });
       }
 
-      onProgress?.('Đang nạp lại giao diện mới...');
-      await new Promise((resolve) => setTimeout(resolve, 300));
+      onProgress?.('Đang tải lại giao diện mới nhất...');
+      await new Promise((resolve) => setTimeout(resolve, 200));
 
-      // Hard reload if controllerchange didn't fire
-      window.location.reload();
+      // Hard reload with cache-busting param
+      window.location.href = window.location.pathname + `?_update=${Date.now()}`;
     } catch (err) {
       console.error('Safe update execution failed:', err);
-      // Fallback reload
       window.location.reload();
     }
   }
 
+  /**
+   * Forces a complete cache-purge and reloads latest code from server immediately.
+   */
+  public async forceReloadLatest(onProgress?: (step: string) => void): Promise<void> {
+    await this.executeSafeUpdate(onProgress);
+  }
+
   public getVersion(): string {
     return CURRENT_APP_VERSION;
+  }
+
+  public getLatestRemoteVersion(): string {
+    return this.latestRemoteVersion;
   }
 
   public getReleaseInfo(): AppReleaseInfo {

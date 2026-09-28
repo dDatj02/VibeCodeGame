@@ -22,7 +22,8 @@ import {
   Undo2,
   Trash2,
   CheckCircle2,
-  Sliders
+  Sliders,
+  RefreshCw
 } from 'lucide-react';
 import { SaveDataModal } from './SaveDataModal';
 import { ShopProfileModal } from './ShopProfileModal';
@@ -280,7 +281,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
               <button
                 onClick={async () => {
                   audioService.playClick();
-                  showNotification('Đang kiểm tra phiên bản mới...', 'info');
+                  showNotification('Đang kiểm tra phiên bản mới từ máy chủ...', 'info');
                   const hasNew = await UpdateService.checkForUpdates();
                   if (hasNew) {
                     showNotification('🚀 Đã tìm thấy bản cập nhật mới! Đang chuẩn bị...', 'success');
@@ -299,12 +300,32 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
                       Kiểm Tra Bản Cập Nhật
                     </span>
                     <span className="text-[9.5px] text-stone-500">
-                      Cập nhật trực tiếp không mất dữ liệu ({CURRENT_APP_VERSION})
+                      Tự động tìm kiếm bản mới ({CURRENT_APP_VERSION})
                     </span>
                   </div>
                 </div>
                 <span className="text-[9px] font-black px-1.5 py-0.5 rounded-full bg-amber-200 text-amber-950">
                   {CURRENT_APP_VERSION}
+                </span>
+              </button>
+
+              {/* Force Clear Cache & Reload Latest */}
+              <button
+                onClick={async () => {
+                  audioService.playClick();
+                  if (window.confirm('Hệ thống sẽ lưu tiến trình tiệm an toàn, xóa bộ nhớ đệm cũ của trình duyệt và tải lại mã nguồn mới nhất từ máy chủ. Bạn có muốn tiếp tục không?')) {
+                    showNotification('Đang làm mới và tải phiên bản mới nhất...', 'info');
+                    await UpdateService.forceReloadLatest();
+                  }
+                }}
+                className="w-full p-2 bg-orange-50 hover:bg-orange-100 border border-orange-200 rounded-xl flex items-center justify-between transition-all cursor-pointer text-orange-950 shadow-2xs"
+              >
+                <div className="flex items-center gap-2">
+                  <RefreshCw size={13} className="text-orange-600 shrink-0" />
+                  <span className="font-black text-[10.5px]">Tải lại & Xóa Cache Bản Mới Nhất</span>
+                </div>
+                <span className="text-[9px] font-bold text-orange-700 bg-orange-100 px-1.5 py-0.2 rounded-md">
+                  Force Reload
                 </span>
               </button>
 
