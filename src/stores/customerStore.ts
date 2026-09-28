@@ -45,12 +45,13 @@ export const useCustomerStore = create<CustomerState>((set, get) => ({
       rand -= arch.spawnWeight;
     }
 
-    // Pick desired recipe (prefer archetype favorites if unlocked)
+    // Pick desired recipe: 65% favorite archetype preference, 35% general menu exploration
     const favoriteUnlocked = chosenArchetype.favoriteRecipes.filter((rId) =>
       availableRecipes.includes(rId)
     );
+    const pickFavorite = favoriteUnlocked.length > 0 && Math.random() < 0.65;
     const chosenRecipeId =
-      favoriteUnlocked.length > 0
+      pickFavorite
         ? favoriteUnlocked[Math.floor(Math.random() * favoriteUnlocked.length)]
         : availableRecipes[Math.floor(Math.random() * availableRecipes.length)];
 

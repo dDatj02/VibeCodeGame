@@ -5,14 +5,18 @@ import { useShopStore } from '../stores/shopStore';
 import { useEconomyStore } from '../stores/economyStore';
 import { useReviewStore } from '../stores/reviewStore';
 import { useInventoryStore } from '../stores/inventoryStore';
+import { useLargeOrderStore } from '../stores/largeOrderStore';
+import { useInvestmentStore } from '../stores/investmentStore';
 import { SHOP_LEVELS } from '../data/upgrades';
 import { GAME_EVENTS } from '../data/events';
 import { DailyReport } from '../types';
 import { SaveService } from '../services/SaveService';
 import { audioService } from '../services/AudioService';
+import { LARGE_ORDER_SPAWN_INTERVAL_MINUTES, LARGE_ORDER_UNLOCK_LEVEL } from '../config/largeOrderConfig';
 
 export class DayCycleSystem {
   private static spawnAccumulator = 0;
+  private static largeOrderAccumulatorMinutes = 0;
 
   public static tick(deltaSeconds: number) {
     const game = useGameStore.getState();
@@ -31,7 +35,32 @@ export class DayCycleSystem {
       return;
     }
 
-    // Tick active customer patience
+    // 1. Large Order System Tick & Unlock Check
+    const largeOrderStore = useLargeOrderStore.getState();
+    largeOrderStore.checkUnlockStatus();
+
+    const isProducingLargeOrder = Boolean(
+      largeOrderStore.activeOrder && largeOrderStore.activeOrder.status === 'producing'
+    );
+
+    if (isProducingLargeOrder) {
+      // Production is running automatically in background
+      largeOrderStore.tickProduction(effectiveDelta);
+    } else {
+      // Check periodic generation of new large order offers when unlocked
+      const shopLevel = useShopStore.getState().currentShopLevel;
+      if (shopLevel >= LARGE_ORDER_UNLOCK_LEVEL && !largeOrderStore.activeOffer && !largeOrderStore.activeOrder) {
+        this.largeOrderAccumulatorMinutes += minutesDelta;
+        if (this.largeOrderAccumulatorMinutes >= LARGE_ORDER_SPAWN_INTERVAL_MINUTES) {
+          this.largeOrderAccumulatorMinutes = 0;
+          if (Math.random() < 0.7) {
+            largeOrderStore.generateOffer();
+          }
+        }
+      }
+    }
+
+    // Tick active customer patience (if any in queue)
     const custStore = useCustomerStore.getState();
     const { expiredCustomers } = custStore.tickPatience(effectiveDelta);
 
@@ -95,9 +124,15 @@ export class DayCycleSystem {
 
     if (this.spawnAccumulator >= spawnThreshold) {
       this.spawnAccumulator = 0;
-      const spawned = custStore.spawnCustomer(unlockedRecipes, currentShopConfig.maxQueueCapacity);
-      if (spawned) {
-        audioService.playOrderBell();
+
+      if (isProducingLargeOrder) {
+        // Shop is closed for bulk production -> Record opportunity cost!
+        largeOrderStore.recordLostCustomerOpportunity();
+      } else {
+        const spawned = custStore.spawnCustomer(unlockedRecipes, currentShopConfig.maxQueueCapacity);
+        if (spawned) {
+          audioService.playOrderBell();
+        }
       }
     }
   }
@@ -135,6 +170,9 @@ export class DayCycleSystem {
 
     // Decrement viral days
     rev.decrementViralDays();
+
+    // Tick daily real estate investment income & market updates
+    useInvestmentStore.getState().tickDailyInvestment(game.day);
 
     const endingCash = econ.cash;
     const netProfit = revenue - (ingredientCost + employeeSalaries + rent + electricity + loanPayments + penalties);

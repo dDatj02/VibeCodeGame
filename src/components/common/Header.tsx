@@ -5,8 +5,8 @@ import { useReviewStore } from '../../stores/reviewStore';
 import { useShopStore } from '../../stores/shopStore';
 import { formatVND, formatGameTime } from '../../utils/format';
 import { audioService } from '../../services/AudioService';
-import { SaveService } from '../../services/SaveService';
-import { Volume2, VolumeX, Play, Pause, FastForward, RotateCcw, Save, UtensilsCrossed, Edit2 } from 'lucide-react';
+import { Play, Pause, FastForward, UtensilsCrossed, Edit2, Settings } from 'lucide-react';
+import { SettingsModal } from '../modals/SettingsModal';
 import { ShopProfileModal } from '../modals/ShopProfileModal';
 
 export const Header: React.FC = () => {
@@ -21,7 +21,6 @@ export const Header: React.FC = () => {
     shopAvatar,
     setGameSpeed, 
     togglePause, 
-    openShopForDay,
     inKitchenMode,
     setInKitchenMode 
   } = useGameStore();
@@ -31,35 +30,13 @@ export const Header: React.FC = () => {
   const totalReviews = useReviewStore((state) => state.totalReviews);
   const currentShopLevel = useShopStore((state) => state.currentShopLevel);
 
-  const [soundOn, setSoundOn] = useState(true);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
-
-  const toggleSound = () => {
-    const next = !soundOn;
-    setSoundOn(next);
-    audioService.setSoundEnabled(next);
-    audioService.setMusicEnabled(next);
-    if (next) audioService.playClick();
-  };
-
-  const handleSave = () => {
-    audioService.playClick();
-    const success = SaveService.saveGame();
-    useGameStore.getState().showNotification(success ? 'Đã lưu tiến trình quán thành công!' : 'Lỗi khi lưu game', success ? 'success' : 'error');
-  };
-
-  const handleReset = () => {
-    if (window.confirm('Bạn có chắc muốn đặt lại toàn bộ dữ liệu và chơi lại từ đầu?')) {
-      audioService.playClick();
-      SaveService.clearSave();
-      useGameStore.getState().showNotification('Đã khởi động lại tiệm mới!', 'info');
-    }
-  };
 
   return (
     <header className="shrink-0 bg-[#FAF4ED] border-b-2 border-[#EEDCC8] text-[#3D2619] px-2.5 pb-1 pt-[calc(0.375rem+env(safe-area-inset-top,0px))] select-none shadow-xs z-30">
       <div className="max-w-5xl mx-auto flex flex-col gap-1">
-        {/* Row 1: Brand & Level on the left, ALL Action Tool Buttons on the right */}
+        {/* Row 1: Brand & Level on the left, Clean Action Buttons on the right */}
         <div className="flex items-center justify-between w-full gap-1">
           {/* Brand & Level (Clickable to customize name & avatar) */}
           <button
@@ -85,8 +62,8 @@ export const Header: React.FC = () => {
             </div>
           </button>
 
-          {/* ALL Game Tool Buttons (Compact & Responsive) */}
-          <div className="flex items-center gap-0.5 sm:gap-1 shrink-0 flex-wrap justify-end">
+          {/* Clean, Grouped Controls */}
+          <div className="flex items-center gap-1 shrink-0">
             {/* Toggle Kitchen mode button */}
             <button
               onClick={() => {
@@ -131,35 +108,17 @@ export const Header: React.FC = () => {
               </button>
             </div>
 
-            {/* Sound Toggle (Bật/Tắt âm thanh) */}
+            {/* Combined Settings Button (Cài Đặt) */}
             <button
-              onClick={toggleSound}
-              className={`p-1 sm:p-1.5 rounded-lg border shadow-2xs transition-colors cursor-pointer ${
-                soundOn
-                  ? 'bg-white hover:bg-amber-50 text-[#8C624D] hover:text-[#3D2619] border-[#EEDCC8]'
-                  : 'bg-rose-50 text-rose-600 border-rose-200'
-              }`}
-              title={soundOn ? 'Tắt âm thanh' : 'Bật âm thanh'}
+              onClick={() => {
+                audioService.playClick();
+                setIsSettingsOpen(true);
+              }}
+              className="px-2 py-1 bg-white hover:bg-amber-100/70 text-[#3D2619] hover:text-[#E05338] rounded-lg border border-[#EEDCC8] hover:border-amber-300 shadow-2xs transition-all cursor-pointer flex items-center gap-1 font-bold text-[10.5px]"
+              title="Cài Đặt & Chức Năng (Âm thanh, Lưu, Khôi phục, Đặt lại)"
             >
-              {soundOn ? <Volume2 size={12} /> : <VolumeX size={12} />}
-            </button>
-
-            {/* Save (Lưu game) */}
-            <button
-              onClick={handleSave}
-              className="p-1 sm:p-1.5 text-[#8C624D] hover:text-emerald-700 bg-white hover:bg-emerald-50 rounded-lg border border-[#EEDCC8] shadow-2xs transition-colors cursor-pointer"
-              title="Lưu game"
-            >
-              <Save size={12} />
-            </button>
-
-            {/* Reset (Chơi lại từ đầu) */}
-            <button
-              onClick={handleReset}
-              className="p-1 sm:p-1.5 text-[#8C624D] hover:text-rose-600 bg-white hover:bg-rose-50 rounded-lg border border-[#EEDCC8] shadow-2xs transition-colors cursor-pointer"
-              title="Chơi lại từ đầu"
-            >
-              <RotateCcw size={11} />
+              <Settings size={12} className="text-amber-700" />
+              <span className="text-[10px] hidden sm:inline">Cài Đặt</span>
             </button>
           </div>
         </div>
@@ -188,6 +147,12 @@ export const Header: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* Settings Modal (Grouped functions) */}
+      <SettingsModal
+        isOpen={isSettingsOpen}
+        onClose={() => setIsSettingsOpen(false)}
+      />
 
       {/* Shop Profile Modal */}
       <ShopProfileModal

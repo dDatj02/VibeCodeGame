@@ -6,6 +6,8 @@ import { useInventoryStore } from '../../stores/inventoryStore';
 import { formatVND } from '../../utils/format';
 import { audioService } from '../../services/AudioService';
 import { SHOP_LEVELS } from '../../data/upgrades';
+import { LargeOrderLobbyCard } from '../largeOrders/LargeOrderLobbyCard';
+import { LargeOrderBanner } from '../largeOrders/LargeOrderBanner';
 import { 
   Sparkles, 
   Trophy, 
@@ -145,7 +147,7 @@ export const CozyShopLobby: React.FC<CozyShopLobbyProps> = ({ onOpenKitchen }) =
     { id: 'upgrades', label: 'Nâng cấp', icon: <Wrench size={16} className="text-emerald-600" /> },
     { id: 'social', label: 'TrendTok', icon: <Share2 size={16} className="text-pink-600" /> },
     { id: 'reviews', label: 'Đánh giá', icon: <Star size={16} className="text-yellow-600" /> },
-    { id: 'finance', label: 'Sổ sách & Vay', icon: <Landmark size={16} className="text-blue-600" /> },
+    { id: 'finance', label: 'Vốn & BĐS', icon: <Landmark size={16} className="text-blue-600" /> },
   ] as const;
 
   const handleQuickRestock = (ingId: string) => {
@@ -427,6 +429,12 @@ export const CozyShopLobby: React.FC<CozyShopLobbyProps> = ({ onOpenKitchen }) =
         {/* ========================================================= */}
         <div className="flex-1 flex flex-col gap-2.5 justify-between">
           
+          {/* Active Large Order Production Banner if producing */}
+          <LargeOrderBanner />
+
+          {/* Large Order Business Challenge Lobby Card */}
+          <LargeOrderLobbyCard onOpenKitchen={onOpenKitchen} />
+
           {/* Today's Weather & Customer Traffic Card */}
           <div className={`rounded-2xl p-3 border border-[#F0D5C3] shadow-xs bg-gradient-to-r ${currentWeather.bgGradient} transition-all`}>
             <div className="flex items-center justify-between">

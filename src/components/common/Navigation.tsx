@@ -3,6 +3,7 @@ import { useGameStore, NavigationTab } from '../../stores/gameStore';
 import { useCustomerStore } from '../../stores/customerStore';
 import { useReviewStore } from '../../stores/reviewStore';
 import { useRecipeStore } from '../../stores/recipeStore';
+import { useLargeOrderStore } from '../../stores/largeOrderStore';
 import { audioService } from '../../services/AudioService';
 import { Store, Package, BookOpen, Landmark, Star, Share2, Sparkles } from 'lucide-react';
 
@@ -20,6 +21,8 @@ export const Navigation: React.FC = () => {
   const isCrisis = useReviewStore((state) => state.isCrisisActive);
   const averageRating = useReviewStore((state) => state.averageRating);
   const recipes = useRecipeStore((state) => state.recipes);
+  const hasLargeOrderOffer = useLargeOrderStore((state) => Boolean(state.activeOffer));
+  const isProducingLargeOrder = useLargeOrderStore((state) => Boolean(state.activeOrder?.status === 'producing'));
 
   const unlockableRecipesCount = recipes.filter((r) => !r.unlocked).length;
 
@@ -28,7 +31,7 @@ export const Navigation: React.FC = () => {
       id: 'shop',
       label: 'Tiệm',
       icon: <Store size={15} />,
-      badge: queueCount > 0 ? queueCount : undefined,
+      badge: isProducingLargeOrder ? '🔒' : hasLargeOrderOffer ? '📦' : queueCount > 0 ? queueCount : undefined,
     },
     {
       id: 'inventory',

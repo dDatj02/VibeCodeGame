@@ -4,11 +4,13 @@ import { useRecipeStore } from '../../stores/recipeStore';
 import { useInventoryStore } from '../../stores/inventoryStore';
 import { useGameStore } from '../../stores/gameStore';
 import { useShopStore } from '../../stores/shopStore';
+import { useLargeOrderStore } from '../../stores/largeOrderStore';
 import { OrderSystem } from '../../systems/OrderSystem';
 import { formatVND } from '../../utils/format';
 import { audioService } from '../../services/AudioService';
 import { CUSTOMER_ARCHETYPES } from '../../data/customers';
 import { CozyCustomerCharacter } from './CozyCustomerCharacter';
+import { LargeOrderBanner } from '../largeOrders/LargeOrderBanner';
 import { IngredientRequirement } from '../../types';
 import { 
   ArrowLeft, 
@@ -30,6 +32,7 @@ export const CozyKitchenCounter: React.FC<CozyKitchenCounterProps> = ({ onBackTo
   const getBlenderSpeedBonus = useShopStore((state) => state.getBlenderSpeedBonus);
   const blenderSpeedBonus = getBlenderSpeedBonus();
   const { showNotification } = useGameStore();
+  const activeLargeOrder = useLargeOrderStore((state) => state.activeOrder);
 
   // Active customer selected to serve (default first in queue)
   const [selectedCustomerIndex, setSelectedCustomerIndex] = useState(0);
@@ -382,6 +385,9 @@ export const CozyKitchenCounter: React.FC<CozyKitchenCounterProps> = ({ onBackTo
         </div>
       </div>
 
+      {/* Large Order Active Banner if producing */}
+      <LargeOrderBanner />
+
       {/* 2. CUSTOMER COUNTER & ORDER BOARD (Responsive, perfectly centered layout) */}
       <div className="relative flex-1 min-h-[175px] max-h-[220px] bg-gradient-to-b from-[#A96A3D] via-[#92552B] to-[#7B421E] px-2 sm:px-4 py-2 flex items-center justify-center sm:justify-between gap-2 sm:gap-4 overflow-hidden border-b-4 border-[#45200C]">
         
@@ -417,6 +423,11 @@ export const CozyKitchenCounter: React.FC<CozyKitchenCounterProps> = ({ onBackTo
               <span className="text-[10px] sm:text-[11px] font-black text-amber-100 bg-[#351A0B]/80 px-1.5 sm:px-2 py-0.5 rounded-full border border-amber-900/60 mt-0.5 shadow-xs truncate max-w-[85px] sm:max-w-[120px]">
                 {selectedCustomer.name}
               </span>
+            </div>
+          ) : activeLargeOrder?.status === 'producing' ? (
+            <div className="py-4 px-2 bg-amber-950/85 rounded-2xl border-2 border-amber-500 text-center text-[10px] text-amber-100 font-bold shadow-md">
+              <span className="text-base block mb-0.5">🔒</span>
+              <span>Đang đóng quầy dồn lực làm đơn sỉ!</span>
             </div>
           ) : (
             <div className="py-6 px-3 bg-amber-50/90 rounded-2xl border-2 border-dashed border-amber-600/40 text-center text-xs text-[#5E2B06] font-bold shadow-md">

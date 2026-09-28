@@ -2,7 +2,8 @@ import React, { useState } from 'react';
 import { useGameStore } from '../../stores/gameStore';
 import { SaveService } from '../../services/SaveService';
 import { audioService } from '../../services/AudioService';
-import { X, Check, Sparkles, Store, Edit3 } from 'lucide-react';
+import { X, Check, Sparkles, Store, Edit3, Cloud } from 'lucide-react';
+import { SaveDataModal } from './SaveDataModal';
 
 interface ShopProfileModalProps {
   isOpen: boolean;
@@ -42,6 +43,7 @@ export const ShopProfileModal: React.FC<ShopProfileModalProps> = ({ isOpen, onCl
 
   const [name, setName] = useState(shopName);
   const [selectedAvatar, setSelectedAvatar] = useState(shopAvatar || '🍹');
+  const [isSaveDataOpen, setIsSaveDataOpen] = useState(false);
 
   if (!isOpen) return null;
 
@@ -174,25 +176,43 @@ export const ShopProfileModal: React.FC<ShopProfileModalProps> = ({ isOpen, onCl
         </div>
 
         {/* Footer Actions */}
-        <div className="bg-[#FAF4ED] border-t-2 border-[#EEDCC8] px-4 py-2.5 flex items-center justify-end gap-2">
+        <div className="bg-[#FAF4ED] border-t-2 border-[#EEDCC8] px-4 py-2.5 flex items-center justify-between gap-2">
           <button
             onClick={() => {
               audioService.playClick();
-              onClose();
+              setIsSaveDataOpen(true);
             }}
-            className="px-3 py-1.5 rounded-xl border-2 border-stone-300 hover:bg-stone-100 text-stone-700 font-bold text-xs cursor-pointer transition-colors"
+            className="px-2.5 py-1.5 rounded-xl bg-amber-100 hover:bg-amber-200/80 text-amber-900 border border-amber-300 font-black text-[10.5px] cursor-pointer transition-colors flex items-center gap-1 shadow-2xs"
           >
-            Hủy
+            <Cloud size={13} className="text-[#E05338]" />
+            <span>Mã Sao Lưu</span>
           </button>
-          <button
-            onClick={handleSave}
-            className="px-4 py-1.5 rounded-xl bg-[#F26440] hover:bg-[#E05338] text-white font-black text-xs shadow-md transition-transform active:scale-95 flex items-center gap-1 cursor-pointer"
-          >
-            <Check size={14} />
-            <span>Lưu Thay Đổi</span>
-          </button>
+
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => {
+                audioService.playClick();
+                onClose();
+              }}
+              className="px-3 py-1.5 rounded-xl border-2 border-stone-300 hover:bg-stone-100 text-stone-700 font-bold text-xs cursor-pointer transition-colors"
+            >
+              Hủy
+            </button>
+            <button
+              onClick={handleSave}
+              className="px-4 py-1.5 rounded-xl bg-[#F26440] hover:bg-[#E05338] text-white font-black text-xs shadow-md transition-transform active:scale-95 flex items-center gap-1 cursor-pointer"
+            >
+              <Check size={14} />
+              <span>Lưu Thay Đổi</span>
+            </button>
+          </div>
         </div>
       </div>
+
+      <SaveDataModal
+        isOpen={isSaveDataOpen}
+        onClose={() => setIsSaveDataOpen(false)}
+      />
     </div>
   );
 };

@@ -13,6 +13,13 @@ import { UpgradesTab } from './components/tabs/UpgradesTab';
 import { DailyReportModal } from './components/modals/DailyReportModal';
 import { EventModal } from './components/modals/EventModal';
 import { BankruptcyModal } from './components/modals/BankruptcyModal';
+import { LargeOrderOfferModal } from './components/largeOrders/LargeOrderOfferModal';
+import { LargeOrderConfirmModal } from './components/largeOrders/LargeOrderConfirmModal';
+import { LargeOrderResultModal } from './components/largeOrders/LargeOrderResultModal';
+import { LargeOrderUnlockModal } from './components/largeOrders/LargeOrderUnlockModal';
+import { LargeOrderHistoryModal } from './components/largeOrders/LargeOrderHistoryModal';
+import { PropertyDetailModal } from './components/investment/PropertyDetailModal';
+import { PropertyInspectionModal } from './components/investment/PropertyInspectionModal';
 import { PWAInstallBanner } from './components/common/PWAInstallBanner';
 import { DayCycleSystem } from './systems/DayCycleSystem';
 import { SaveService } from './services/SaveService';
@@ -74,6 +81,13 @@ export const App: React.FC = () => {
       <DailyReportModal />
       <EventModal />
       <BankruptcyModal />
+      <LargeOrderUnlockModal />
+      <LargeOrderOfferModal />
+      <LargeOrderConfirmModal />
+      <LargeOrderResultModal />
+      <LargeOrderHistoryModal />
+      <PropertyDetailModal />
+      <PropertyInspectionModal />
     </div>
   );
 };

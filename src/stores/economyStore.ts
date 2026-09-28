@@ -16,7 +16,7 @@ interface EconomyState {
   payLoanDaily: () => { totalPaid: number; missed: number };
   repayFullLoan: (loanId: string) => boolean;
   addDailyReport: (report: DailyReport) => void;
-  calculateNetWorth: (equipmentValue: number) => number;
+  calculateNetWorth: (equipmentValue: number, propertyValue?: number) => number;
   resetEconomy: () => void;
 }
 
@@ -137,10 +137,10 @@ export const useEconomyStore = create<EconomyState>((set, get) => ({
     }));
   },
 
-  calculateNetWorth: (equipmentValue: number) => {
+  calculateNetWorth: (equipmentValue: number, propertyValue: number = 0) => {
     const { cash, bankBalance, activeLoans } = get();
     const totalDebt = activeLoans.reduce((sum, l) => sum + l.remainingPrincipal, 0);
-    return cash + bankBalance + equipmentValue - totalDebt;
+    return cash + bankBalance + equipmentValue + propertyValue - totalDebt;
   },
 
   resetEconomy: () => {
