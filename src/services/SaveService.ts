@@ -3,7 +3,7 @@ import { useEconomyStore } from '../stores/economyStore';
 import { useInventoryStore } from '../stores/inventoryStore';
 import { useRecipeStore } from '../stores/recipeStore';
 import { useShopStore } from '../stores/shopStore';
-import { useReviewStore } from '../stores/reviewStore';
+import { useReviewStore, INITIAL_MAPREVIEW_MODERATION, INITIAL_GOODWILL, INITIAL_PUBLIC_SENTIMENT } from '../stores/reviewStore';
 import { useSocialStore } from '../stores/socialStore';
 import { useLargeOrderStore } from '../stores/largeOrderStore';
 import { useInvestmentStore, INITIAL_GOLD_HOLDING } from '../stores/investmentStore';
@@ -81,6 +81,9 @@ export interface GameSaveDataV1 {
     reviews: unknown[];
     averageRating: number;
     totalReviews: number;
+    goodwill?: number;
+    publicSentiment?: number;
+    mapReviewModeration?: unknown;
   };
   social: {
     posts: unknown[];
@@ -156,6 +159,9 @@ export class SaveService {
         reviews: rev.reviews,
         averageRating: rev.averageRating,
         totalReviews: rev.totalReviews,
+        goodwill: rev.goodwill,
+        publicSentiment: rev.publicSentiment,
+        mapReviewModeration: rev.mapReviewModeration,
       },
       social: {
         posts: soc.posts,
@@ -258,6 +264,9 @@ export class SaveService {
           reviews: (data.reviews.reviews as any) || [],
           averageRating: data.reviews.averageRating || 5.0,
           totalReviews: data.reviews.totalReviews || 0,
+          goodwill: data.reviews.goodwill ?? INITIAL_GOODWILL,
+          publicSentiment: data.reviews.publicSentiment ?? INITIAL_PUBLIC_SENTIMENT,
+          mapReviewModeration: (data.reviews.mapReviewModeration as any) || INITIAL_MAPREVIEW_MODERATION,
         });
       }
       if (data.social) {

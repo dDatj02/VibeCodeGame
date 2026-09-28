@@ -12,6 +12,9 @@ export interface BackupMetadata {
   customersServed: number;
   totalReviews: number;
   averageRating: number;
+  goodwill?: number;
+  publicSentiment?: number;
+  mapReviewSuspended?: boolean;
 }
 
 export interface BackupEnvelope {

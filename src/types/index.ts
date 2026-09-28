@@ -1,3 +1,5 @@
+import { ReplySentiment, ReplyAnalysisResult } from './mapReview';
+
 export type Money = number;
 export type IngredientId = string;
 export type RecipeId = string;
@@ -89,6 +91,11 @@ export interface ReviewItem {
   helpfulCount: number;
   isViral?: boolean;
   aspect: 'quality' | 'speed' | 'price' | 'cleanliness' | 'service';
+  ownerReply?: string;
+  ownerReplySentiment?: ReplySentiment;
+  ownerReplyAt?: string;
+  wasReported?: boolean;
+  replyAnalysis?: ReplyAnalysisResult;
 }
 
 export interface ActiveLoan {

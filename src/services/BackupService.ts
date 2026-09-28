@@ -81,6 +81,9 @@ export class BackupService {
       customersServed: totalCustomersServed,
       totalReviews: rev.totalReviews,
       averageRating: rev.averageRating,
+      goodwill: rev.goodwill,
+      publicSentiment: rev.publicSentiment,
+      mapReviewSuspended: rev.mapReviewModeration.isSuspended,
     };
 
     // Calculate checksum of inner saveData

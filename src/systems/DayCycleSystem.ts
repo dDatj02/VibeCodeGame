@@ -118,6 +118,23 @@ export class DayCycleSystem {
     if (rev.isViralBoostActive) trafficMultiplier *= 1.8;
     if (rev.isCrisisActive) trafficMultiplier *= 0.5;
 
+    // MapReview Platform Suspension (-25% traffic loss when suspended)
+    if (rev.mapReviewModeration.isSuspended) {
+      trafficMultiplier *= 0.75;
+    }
+
+    // Customer Goodwill impact on foot traffic
+    if (rev.goodwill > 80) {
+      trafficMultiplier *= 1 + (rev.goodwill - 80) * 0.005; // up to +10%
+    } else if (rev.goodwill < 50) {
+      trafficMultiplier *= Math.max(0.6, 1 - (50 - rev.goodwill) * 0.008); // up to -40%
+    }
+
+    // Active Viral Buzz impact
+    if (rev.mapReviewModeration.buzzDaysLeft > 0 && rev.mapReviewModeration.buzzTrafficModifier !== 0) {
+      trafficMultiplier *= Math.max(0.5, 1 + rev.mapReviewModeration.buzzTrafficModifier / 100);
+    }
+
     // Base spawn interval: e.g. every 5 seconds adjusted by traffic
     const spawnThreshold = Math.max(1.8, 6.0 / trafficMultiplier);
     this.spawnAccumulator += effectiveDelta;
@@ -168,8 +185,8 @@ export class DayCycleSystem {
     const coolerBonus = shop.getCoolerFreshnessBonus();
     inv.ageIngredientsDaily(coolerBonus);
 
-    // Decrement viral days
-    rev.decrementViralDays();
+    // Decrement viral days & tick MapReview buzz/moderation status
+    rev.tickDailyMapReview(game.day);
 
     // Tick daily real estate investment income & market updates
     useInvestmentStore.getState().tickDailyInvestment(game.day);
