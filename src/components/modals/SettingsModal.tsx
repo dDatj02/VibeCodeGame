@@ -4,6 +4,7 @@ import { useEconomyStore } from '../../stores/economyStore';
 import { useShopStore } from '../../stores/shopStore';
 import { audioService } from '../../services/AudioService';
 import { SaveService } from '../../services/SaveService';
+import { UpdateService, CURRENT_APP_VERSION } from '../../services/UpdateService';
 import { formatVND } from '../../utils/format';
 import { 
   X, 
@@ -273,6 +274,38 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
                   </div>
                 </div>
                 <CheckCircle2 size={15} className="text-emerald-600" />
+              </button>
+
+              {/* Check for App Updates */}
+              <button
+                onClick={async () => {
+                  audioService.playClick();
+                  showNotification('Đang kiểm tra phiên bản mới...', 'info');
+                  const hasNew = await UpdateService.checkForUpdates();
+                  if (hasNew) {
+                    showNotification('🚀 Đã tìm thấy bản cập nhật mới! Đang chuẩn bị...', 'success');
+                  } else {
+                    showNotification(`✓ Bạn đang ở phiên bản mới nhất (${CURRENT_APP_VERSION})!`, 'success');
+                  }
+                }}
+                className="w-full p-2.5 bg-amber-50/70 hover:bg-amber-100/70 border border-amber-300 rounded-xl flex items-center justify-between transition-all cursor-pointer group shadow-2xs text-[#3D2619]"
+              >
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-lg bg-amber-600 text-white flex items-center justify-center shadow-xs">
+                    <Sparkles size={16} />
+                  </div>
+                  <div className="text-left">
+                    <span className="font-black text-xs block">
+                      Kiểm Tra Bản Cập Nhật
+                    </span>
+                    <span className="text-[9.5px] text-stone-500">
+                      Cập nhật trực tiếp không mất dữ liệu ({CURRENT_APP_VERSION})
+                    </span>
+                  </div>
+                </div>
+                <span className="text-[9px] font-black px-1.5 py-0.5 rounded-full bg-amber-200 text-amber-950">
+                  {CURRENT_APP_VERSION}
+                </span>
               </button>
 
               {/* Safety Backup rollback if available */}

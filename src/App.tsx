@@ -20,7 +20,10 @@ import { LargeOrderUnlockModal } from './components/largeOrders/LargeOrderUnlock
 import { LargeOrderHistoryModal } from './components/largeOrders/LargeOrderHistoryModal';
 import { PropertyDetailModal } from './components/investment/PropertyDetailModal';
 import { PropertyInspectionModal } from './components/investment/PropertyInspectionModal';
+import { BuyGoldModal } from './components/investment/BuyGoldModal';
+import { SellGoldModal } from './components/investment/SellGoldModal';
 import { PWAInstallBanner } from './components/common/PWAInstallBanner';
+import { PWAUpdatePrompt } from './components/common/PWAUpdatePrompt';
 import { DayCycleSystem } from './systems/DayCycleSystem';
 import { SaveService } from './services/SaveService';
 
@@ -77,6 +80,7 @@ export const App: React.FC = () => {
 
       {/* 4. Global Modals & Feedback */}
       <PWAInstallBanner />
+      <PWAUpdatePrompt />
       <NotificationToast />
       <DailyReportModal />
       <EventModal />
@@ -88,6 +92,8 @@ export const App: React.FC = () => {
       <LargeOrderHistoryModal />
       <PropertyDetailModal />
       <PropertyInspectionModal />
+      <BuyGoldModal />
+      <SellGoldModal />
     </div>
   );
 };

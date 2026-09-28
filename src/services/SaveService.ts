@@ -6,7 +6,8 @@ import { useShopStore } from '../stores/shopStore';
 import { useReviewStore } from '../stores/reviewStore';
 import { useSocialStore } from '../stores/socialStore';
 import { useLargeOrderStore } from '../stores/largeOrderStore';
-import { useInvestmentStore } from '../stores/investmentStore';
+import { useInvestmentStore, INITIAL_GOLD_HOLDING } from '../stores/investmentStore';
+import { INITIAL_GOLD_MARKET } from '../systems/investment/GoldMarket';
 import { INITIAL_INGREDIENTS } from '../data/ingredients';
 import { RECIPES } from '../data/recipes';
 import { INITIAL_LAND_PROPERTIES, INITIAL_HOUSE_PROPERTIES } from '../data/properties';
@@ -101,6 +102,8 @@ export interface GameSaveDataV1 {
     investmentHistory: unknown[];
     totalRealizedProfit: number;
     totalRentalIncomeEarned: number;
+    goldHolding?: unknown;
+    goldMarket?: unknown;
   };
 }
 
@@ -174,6 +177,8 @@ export class SaveService {
         investmentHistory: inv.investmentHistory,
         totalRealizedProfit: inv.totalRealizedProfit,
         totalRentalIncomeEarned: inv.totalRentalIncomeEarned,
+        goldHolding: inv.goldHolding,
+        goldMarket: inv.goldMarket,
       },
     };
   }
@@ -280,6 +285,8 @@ export class SaveService {
           investmentHistory: (data.investments.investmentHistory as any) || [],
           totalRealizedProfit: data.investments.totalRealizedProfit || 0,
           totalRentalIncomeEarned: data.investments.totalRentalIncomeEarned || 0,
+          goldHolding: (data.investments.goldHolding as any) || INITIAL_GOLD_HOLDING,
+          goldMarket: (data.investments.goldMarket as any) || INITIAL_GOLD_MARKET,
         });
       }
 

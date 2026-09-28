@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 import { useInvestmentStore } from '../../stores/investmentStore';
 import { useEconomyStore } from '../../stores/economyStore';
-import { useShopStore } from '../../stores/shopStore';
 import { formatVND } from '../../utils/format';
 import { audioService } from '../../services/AudioService';
 import { PropertyItem, LandProperty, HouseProperty } from '../../types/investment';
+import { GoldInvestmentView } from './GoldInvestmentView';
 import { 
   Landmark, 
   MapPin, 
@@ -22,7 +22,8 @@ import {
   TreePine,
   DollarSign,
   Store,
-  Clock
+  Clock,
+  Sparkles
 } from 'lucide-react';
 
 export const InvestmentHub: React.FC = () => {
@@ -30,17 +31,24 @@ export const InvestmentHub: React.FC = () => {
   const availableLand = useInvestmentStore((state) => state.availableLand);
   const availableHouses = useInvestmentStore((state) => state.availableHouses);
   const ownedProperties = useInvestmentStore((state) => state.ownedProperties);
+  const goldHolding = useInvestmentStore((state) => state.goldHolding);
+  const goldMarket = useInvestmentStore((state) => state.goldMarket);
   const investmentHistory = useInvestmentStore((state) => state.investmentHistory);
   const totalRealizedProfit = useInvestmentStore((state) => state.totalRealizedProfit);
   const openPropertyModal = useInvestmentStore((state) => state.openPropertyModal);
+  const openBuyGoldModal = useInvestmentStore((state) => state.openBuyGoldModal);
+  const openSellGoldModal = useInvestmentStore((state) => state.openSellGoldModal);
   const getTotalPropertyMarketValue = useInvestmentStore((state) => state.getTotalPropertyMarketValue);
+  const getGoldCurrentValue = useInvestmentStore((state) => state.getGoldCurrentValue);
+  const getTotalInvestmentValue = useInvestmentStore((state) => state.getTotalInvestmentValue);
   const getTotalUnrealizedProfit = useInvestmentStore((state) => state.getTotalUnrealizedProfit);
   const getTotalMonthlyRentalIncome = useInvestmentStore((state) => state.getTotalMonthlyRentalIncome);
 
-  const [subTab, setSubTab] = useState<'land' | 'house' | 'gold' | 'commercial' | 'portfolio' | 'history'>('land');
+  const [subTab, setSubTab] = useState<'land' | 'house' | 'gold' | 'portfolio' | 'history'>('land');
 
   const totalPropertyValue = getTotalPropertyMarketValue();
-  const totalUnrealized = getTotalUnrealizedProfit();
+  const goldValue = getGoldCurrentValue();
+  const totalInvestmentVal = getTotalInvestmentValue();
   const totalMonthlyRent = getTotalMonthlyRentalIncome();
   const activeRentalsCount = ownedProperties.filter((p) => p.isRented).length;
 
@@ -52,9 +60,9 @@ export const InvestmentHub: React.FC = () => {
         <div className="grid grid-cols-3 gap-1.5 text-center text-xs">
           
           <div className="bg-black/30 p-1.5 rounded-xl border border-amber-700/50">
-            <span className="text-[9px] text-amber-200/80 font-bold block">Tổng Giá Trị BĐS</span>
+            <span className="text-[9px] text-amber-200/80 font-bold block">Tổng Danh Mục Đầu Tư</span>
             <span className="text-xs font-black text-amber-300 tabular-nums">
-              {formatVND(totalPropertyValue)}
+              {formatVND(totalInvestmentVal)}
             </span>
           </div>
 
@@ -110,16 +118,31 @@ export const InvestmentHub: React.FC = () => {
         <button
           onClick={() => {
             audioService.playClick();
+            setSubTab('gold');
+          }}
+          className={`px-2.5 py-1 text-xs font-black rounded-xl flex items-center gap-1 transition-all whitespace-nowrap cursor-pointer shadow-2xs ${
+            subTab === 'gold'
+              ? 'bg-[#E05338] text-white ring-2 ring-amber-400'
+              : 'bg-amber-50 text-amber-900 border border-amber-300'
+          }`}
+        >
+          <Coins size={12} className="text-amber-500" />
+          <span>Vàng 9999 {goldHolding.quantity > 0 ? `(${goldHolding.quantity}L)` : ''}</span>
+        </button>
+
+        <button
+          onClick={() => {
+            audioService.playClick();
             setSubTab('portfolio');
           }}
           className={`px-2.5 py-1 text-xs font-black rounded-xl flex items-center gap-1 transition-all whitespace-nowrap cursor-pointer shadow-2xs ${
             subTab === 'portfolio'
               ? 'bg-[#E05338] text-white'
-              : 'bg-amber-100 text-amber-900 border border-amber-300'
+              : 'bg-stone-100 text-stone-800 border border-stone-300'
           }`}
         >
           <FolderLock size={12} />
-          <span>Đã Sở Hữu ({ownedProperties.length})</span>
+          <span>Tài Sản ({ownedProperties.length + (goldHolding.quantity > 0 ? 1 : 0)})</span>
         </button>
 
         <button
@@ -135,28 +158,6 @@ export const InvestmentHub: React.FC = () => {
         >
           <History size={12} />
           <span>Nhật Ký</span>
-        </button>
-
-        <button
-          onClick={() => {
-            audioService.playClick();
-            setSubTab('gold');
-          }}
-          className="px-2 py-1 text-xs font-bold rounded-xl flex items-center gap-1 bg-stone-100 text-stone-400 border border-stone-200 whitespace-nowrap"
-        >
-          <Coins size={12} />
-          <span>Vàng 9999</span>
-        </button>
-
-        <button
-          onClick={() => {
-            audioService.playClick();
-            setSubTab('commercial');
-          }}
-          className="px-2 py-1 text-xs font-bold rounded-xl flex items-center gap-1 bg-stone-100 text-stone-400 border border-stone-200 whitespace-nowrap"
-        >
-          <Building2 size={12} />
-          <span>Toà Nhà Sỉ</span>
         </button>
       </div>
 
@@ -225,7 +226,7 @@ export const InvestmentHub: React.FC = () => {
           <div className="space-y-2">
             {availableHouses.length === 0 ? (
               <div className="p-6 text-center text-xs text-stone-500 font-bold bg-white rounded-2xl border border-dashed border-stone-300">
-                🏠 Bạn đã sở hữu toàn bộ nhà phố đang chào bán!
+                🏠 Bạn đã mua hết các căn nhà phố trên thị trường!
               </div>
             ) : (
               availableHouses.map((house) => (
@@ -273,14 +274,75 @@ export const InvestmentHub: React.FC = () => {
           </div>
         )}
 
-        {/* SUBTAB: MY PORTFOLIO */}
+        {/* SUBTAB: GOLD INVESTMENT */}
+        {subTab === 'gold' && <GoldInvestmentView />}
+
+        {/* SUBTAB: MY PORTFOLIO (Properties + Gold) */}
         {subTab === 'portfolio' && (
           <div className="space-y-2">
-            {ownedProperties.length === 0 ? (
+            
+            {/* Gold Holding Item in Portfolio */}
+            {goldHolding.quantity > 0 && (
+              <div className="p-3 bg-gradient-to-r from-amber-50 via-orange-50 to-amber-50 rounded-2xl border-2 border-amber-400 shadow-xs space-y-2">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className="w-10 h-10 rounded-xl bg-amber-400 text-amber-950 flex items-center justify-center font-black text-xl shadow-2xs">
+                      🪙
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-1.5">
+                        <h4 className="text-xs font-black text-[#3D2619]">
+                          Vàng 9999 (Gold Asset)
+                        </h4>
+                        <span className="text-[9px] font-black px-1.5 py-0.2 rounded-full bg-amber-200 text-amber-900">
+                          {goldHolding.quantity} lượng
+                        </span>
+                      </div>
+                      <span className="text-[10px] text-stone-500 font-bold block">
+                        Giá vốn: {formatVND(goldHolding.averagePurchasePrice)}/L · Thị trường: {formatVND(goldMarket.currentPrice)}/L
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="text-right">
+                    <span className="text-xs font-black text-amber-900 tabular-nums block">
+                      {formatVND(goldValue)}
+                    </span>
+                    <span className={`text-[10px] font-bold tabular-nums block ${goldValue >= goldHolding.totalInvested ? 'text-emerald-700' : 'text-rose-700'}`}>
+                      {goldValue >= goldHolding.totalInvested ? '+' : ''}{formatVND(goldValue - goldHolding.totalInvested)}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-end gap-1.5 pt-1 border-t border-amber-200/60">
+                  <button
+                    onClick={() => {
+                      audioService.playClick();
+                      openBuyGoldModal();
+                    }}
+                    className="px-2.5 py-1 rounded-lg bg-white hover:bg-amber-100/80 border border-amber-300 text-amber-900 font-black text-[10.5px] cursor-pointer shadow-2xs transition-colors"
+                  >
+                    + Mua Thêm
+                  </button>
+                  <button
+                    onClick={() => {
+                      audioService.playClick();
+                      openSellGoldModal();
+                    }}
+                    className="px-2.5 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-black text-[10.5px] cursor-pointer shadow-2xs transition-colors"
+                  >
+                    Bán Chốt Lời
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Real Estate Properties in Portfolio */}
+            {ownedProperties.length === 0 && goldHolding.quantity === 0 ? (
               <div className="p-6 text-center text-xs text-stone-500 font-bold bg-white rounded-2xl border border-dashed border-stone-300 space-y-1">
                 <span className="text-2xl block">💼</span>
-                <span>Bạn chưa sở hữu bất động sản nào.</span>
-                <p className="text-[10px] text-stone-400">Hãy chọn tab Đất Đai hoặc Nhà Phố để mua tích sản và nhận tiền thuê thụ động!</p>
+                <span>Bạn chưa sở hữu tài sản hay bất động sản nào.</span>
+                <p className="text-[10px] text-stone-400">Hãy chọn tab Đất Đai, Nhà Phố hoặc Vàng 9999 để mua tích sản và sinh lời!</p>
               </div>
             ) : (
               ownedProperties.map((prop) => {
@@ -344,7 +406,7 @@ export const InvestmentHub: React.FC = () => {
           <div className="space-y-1.5">
             {investmentHistory.length === 0 ? (
               <div className="p-6 text-center text-xs text-stone-500 font-bold bg-white rounded-2xl border border-dashed border-stone-300">
-                📜 Chưa có lịch sử giao dịch đầu tư bất động sản.
+                📜 Chưa có lịch sử giao dịch đầu tư.
               </div>
             ) : (
               investmentHistory.map((tx) => (
@@ -352,43 +414,21 @@ export const InvestmentHub: React.FC = () => {
                   key={tx.id}
                   className="p-2.5 bg-white rounded-xl border border-amber-200/70 shadow-2xs flex items-center justify-between text-xs"
                 >
-                  <div>
-                    <span className="font-bold text-[#3D2619] block text-[11px]">
+                  <div className="min-w-0 pr-2">
+                    <span className="font-bold text-[#3D2619] block text-[11px] truncate">
                       {tx.description}
                     </span>
                     <span className="text-[9.5px] text-stone-500">
-                      Ngày {tx.day} · {tx.type === 'buy' ? 'Mua vào' : tx.type === 'sell' ? 'Bán ra' : tx.type === 'rent_income' ? 'Tiền thuê' : 'Bảo dưỡng/Sửa'}
+                      Ngày {tx.day} · {tx.propertyType === 'gold' ? '🪙 Vàng' : tx.type === 'buy' ? 'Mua vào' : tx.type === 'sell' ? 'Bán ra' : tx.type === 'rent_income' ? 'Tiền thuê' : 'Bảo dưỡng/Sửa'}
                     </span>
                   </div>
 
-                  <span className={`font-black tabular-nums text-xs ${tx.amount >= 0 ? 'text-emerald-700' : 'text-rose-700'}`}>
+                  <span className={`font-black tabular-nums text-xs shrink-0 ${tx.amount >= 0 ? 'text-emerald-700' : 'text-rose-700'}`}>
                     {tx.amount >= 0 ? `+${formatVND(tx.amount)}` : formatVND(tx.amount)}
                   </span>
                 </div>
               ))
             )}
-          </div>
-        )}
-
-        {/* SUBTAB: GOLD PREVIEW */}
-        {subTab === 'gold' && (
-          <div className="p-6 bg-amber-50/70 border border-amber-300 rounded-2xl text-center space-y-2">
-            <span className="text-3xl block">🪙</span>
-            <h4 className="text-xs font-black text-amber-950">Thị Trường Vàng SJC & Nhẫn Trơn</h4>
-            <p className="text-[10px] text-stone-600 leading-relaxed">
-              Kênh tích sản chống lạm phát và dự trữ phòng thủ cho chuỗi quán sinh tố. Tính năng đang được cập nhật trong bản mở rộng tiếp theo!
-            </p>
-          </div>
-        )}
-
-        {/* SUBTAB: COMMERCIAL PROPERTY PREVIEW */}
-        {subTab === 'commercial' && (
-          <div className="p-6 bg-amber-50/70 border border-amber-300 rounded-2xl text-center space-y-2">
-            <span className="text-3xl block">🏢</span>
-            <h4 className="text-xs font-black text-amber-950">Tòa Nhà Văn Phòng & Shophouse</h4>
-            <p className="text-[10px] text-stone-600 leading-relaxed">
-              Các tổ hợp trung tâm thương mại và tòa nhà văn phòng cho thuê quy mô lớn. Tính năng đang được cập nhật trong bản mở rộng tiếp theo!
-            </p>
           </div>
         )}
 

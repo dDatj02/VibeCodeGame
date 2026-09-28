@@ -64,7 +64,8 @@ export class BackupService {
 
     const equipmentVal = s.getTotalEquipmentValue();
     const propertyVal = inv.getTotalPropertyMarketValue();
-    const netWorth = e.calculateNetWorth(equipmentVal, propertyVal);
+    const goldVal = inv.getGoldCurrentValue();
+    const netWorth = e.calculateNetWorth(equipmentVal, propertyVal, goldVal);
 
     const totalCustomersServed = (e.dailyReports || []).reduce((sum: number, r: any) => sum + (r.totalCustomersServed || 0), 0) + (cust.customersServedToday || 0);
 
@@ -76,6 +77,7 @@ export class BackupService {
       cash: e.cash,
       netWorth,
       propertiesCount: inv.ownedProperties.length,
+      goldQuantity: inv.goldHolding.quantity,
       customersServed: totalCustomersServed,
       totalReviews: rev.totalReviews,
       averageRating: rev.averageRating,

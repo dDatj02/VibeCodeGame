@@ -104,6 +104,38 @@ export interface HouseProperty {
 
 export type PropertyItem = LandProperty | HouseProperty;
 
+export interface GoldHolding {
+  quantity: number; // In lượng (e.g. 2.5 lượng)
+  totalInvested: Money; // Total purchase cost of currently owned gold (VND)
+  averagePurchasePrice: Money; // Weighted average cost per lượng (VND)
+  realizedProfit: Money; // Accumulated realized profit/loss from gold sales
+  lastUpdatedDay?: number;
+}
+
+export interface GoldPriceHistoryItem {
+  day: number;
+  price: Money; // Price per lượng in VND
+  changePercent: number; // e.g. +2.5%
+  reason?: string;
+}
+
+export interface GoldMarketEvent {
+  id: string;
+  title: string;
+  description: string;
+  icon: string;
+  effectPercent: number; // e.g. 0.08 for +8%, -0.06 for -6%
+  day: number;
+}
+
+export interface GoldMarketState {
+  currentPrice: Money; // Price per lượng in VND
+  yesterdayPrice: Money;
+  todayChangePercent: number;
+  priceHistory: GoldPriceHistoryItem[];
+  activeMarketEvent?: GoldMarketEvent | null;
+}
+
 export interface InvestmentTransaction {
   id: string;
   day: number;

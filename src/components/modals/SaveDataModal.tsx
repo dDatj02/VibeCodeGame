@@ -414,7 +414,7 @@ export const SaveDataModal: React.FC<SaveDataModalProps> = ({ isOpen, onClose })
                             <span>• Ngày: <strong>{validatedEnvelope.metadata.day}</strong></span>
                             <span>• Tiền mặt: <strong>{formatVND(validatedEnvelope.metadata.cash)}</strong></span>
                             <span>• Cấp tiệm: <strong>Cấp {validatedEnvelope.metadata.shopLevel}</strong></span>
-                            <span>• BĐS: <strong>{validatedEnvelope.metadata.propertiesCount} tài sản</strong></span>
+                            <span>• BĐS / Vàng: <strong>{validatedEnvelope.metadata.propertiesCount} BĐS {validatedEnvelope.metadata.goldQuantity ? `· ${validatedEnvelope.metadata.goldQuantity}L vàng` : ''}</strong></span>
                             <span>• Sao: <strong>{validatedEnvelope.metadata.averageRating}★</strong></span>
                           </div>
                         </div>

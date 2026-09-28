@@ -8,6 +8,7 @@ export interface BackupMetadata {
   cash: number;
   netWorth: number;
   propertiesCount: number;
+  goldQuantity?: number;
   customersServed: number;
   totalReviews: number;
   averageRating: number;
